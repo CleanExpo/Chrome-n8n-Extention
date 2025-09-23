@@ -1,0 +1,9 @@
+{
+  "name": "com.n8n.assistant",
+  "description": "n8n AI Assistant Native Messaging Host",
+  "path": "native_host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://YOUR_EXTENSION_ID_HERE/"
+  ]
+}
