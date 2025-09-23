@@ -19,13 +19,13 @@ class PrivateAuthenticator {
             // Load authorized emails from Chrome storage
             const config = await this.loadPrivateConfig();
 
-            // If no config exists, create default with placeholders
+            // If no config exists, create default with your authorized accounts
             if (!config.authorizedEmails || config.authorizedEmails.length === 0) {
-                // These should be replaced with your actual Gmail addresses
+                // Your authorized Gmail addresses
                 await this.savePrivateConfig({
                     authorizedEmails: [
-                        'your.email.1@gmail.com',  // Replace with your first Gmail
-                        'your.email.2@gmail.com'   // Replace with your second Gmail
+                        'phill.mcgurk@gmail.com',     // Primary authorized account
+                        'zenithfresh25@gmail.com'     // Secondary authorized account
                     ],
                     strictMode: true,
                     allowLocalTesting: true

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Private AI Assistant - Restricted Access",
+  "name": "Private AI Assistant - McGurk & Zenith",
   "version": "1.0.0",
-  "description": "Private AI assistant with advanced automation - Restricted to authorized users only",
+  "description": "Private AI assistant - Exclusively for phill.mcgurk@gmail.com and zenithfresh25@gmail.com",
 
   "oauth2": {
     "client_id": "YOUR_PRIVATE_CLIENT_ID.apps.googleusercontent.com",

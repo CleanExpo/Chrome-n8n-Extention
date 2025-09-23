@@ -10,10 +10,10 @@ const privateAuth = new PrivateAuthenticator();
 
 // Configuration for your private accounts
 const PRIVATE_CONFIG = {
-    // Replace these with your actual Gmail addresses
+    // Your authorized Gmail addresses
     authorizedEmails: [
-        'your.first.email@gmail.com',  // Your first Gmail account
-        'your.second.email@gmail.com'  // Your second Gmail account
+        'phill.mcgurk@gmail.com',     // Primary Gmail account
+        'zenithfresh25@gmail.com'     // Secondary Gmail account
     ],
 
     // Security settings
