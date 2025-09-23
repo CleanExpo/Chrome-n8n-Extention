@@ -36,7 +36,20 @@ test-*.html
 # Private/sensitive files
 .env
 .env.local
+.env.production
 secrets.json
+private-config.json
+credentials.json
+token.json
+refresh_token.json
+
+# Google OAuth2 Private Keys
+key.pem
+manifest.key
+chrome-extension-key.pem
+*.pem
+*.key
+*.crt
 
 # Python files (if not needed)
 *.py
