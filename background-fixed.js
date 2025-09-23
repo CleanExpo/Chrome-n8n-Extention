@@ -727,8 +727,11 @@ async function testN8n(url) {
     }
 
     try {
+        // Check if it's n8n cloud or local
+        const isCloud = url.includes('.n8n.cloud') || url.includes('n8n.cloud');
+
         // For local n8n, check if it's running
-        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        if (!isCloud && (url.includes('localhost') || url.includes('127.0.0.1'))) {
             // Try a simple GET first to check if n8n is running
             try {
                 const healthCheck = await fetchWithTimeout(url.replace('/webhook/', '/').replace('/webhook', ''), {
@@ -758,9 +761,15 @@ async function testN8n(url) {
         }, 5000);
 
         if (response.ok) {
-            return { success: true, message: 'n8n webhook connected successfully' };
+            const instanceName = isCloud ? 'n8n Cloud' : 'n8n';
+            return { success: true, message: `${instanceName} webhook connected successfully` };
         } else if (response.status === 404) {
-            return { success: false, message: 'Webhook not found. Create webhook in n8n first.' };
+            const setupMsg = isCloud ?
+                'Webhook not found. Create and activate workflow in n8n cloud.' :
+                'Webhook not found. Create webhook in n8n first.';
+            return { success: false, message: setupMsg };
+        } else if (response.status === 401 || response.status === 403) {
+            return { success: false, message: 'Authentication failed. Check webhook settings.' };
         } else {
             return { success: false, message: `n8n returned: ${response.status}` };
         }
