@@ -36,8 +36,7 @@
   ],
 
   "background": {
-    "service_worker": "background-private.js",
-    "type": "module"
+    "service_worker": "background-fixed.js"
   },
 
   "content_scripts": [

@@ -1,11 +1,19 @@
 /**
  * Background Service Worker - Complete Rewrite with Proper Error Handling
  * This is a production-ready implementation with comprehensive error management
+ * Private extension for phill.mcgurk@gmail.com and zenithfresh25@gmail.com
  */
+
+// Authorized accounts configuration
+const AUTHORIZED_ACCOUNTS = [
+    'phill.mcgurk@gmail.com',
+    'zenithfresh25@gmail.com'
+];
 
 // Import all required modules with error handling
 try {
     importScripts(
+        'private-auth.js',
         'websocket-client-fixed.js',
         'screenshot.js',
         'context7-integration.js',
@@ -713,19 +721,54 @@ async function testOpenAI(apiKey) {
  * Test n8n connection
  */
 async function testN8n(url) {
+    // n8n is optional - don't show as error if not configured
+    if (!url || url.trim() === '') {
+        return { success: true, message: 'n8n not configured (optional)' };
+    }
+
     try {
+        // For local n8n, check if it's running
+        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+            // Try a simple GET first to check if n8n is running
+            try {
+                const healthCheck = await fetchWithTimeout(url.replace('/webhook/', '/').replace('/webhook', ''), {
+                    method: 'GET'
+                }, 2000);
+                // If we can't reach n8n at all, it's probably not running
+                if (!healthCheck.ok && healthCheck.status === 0) {
+                    return {
+                        success: false,
+                        message: 'n8n not running locally. Start with: n8n start'
+                    };
+                }
+            } catch (e) {
+                // n8n might not be running
+                return {
+                    success: false,
+                    message: 'n8n not running. Start with: n8n start'
+                };
+            }
+        }
+
+        // Try to POST to webhook endpoint
         const response = await fetchWithTimeout(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ test: true })
+            body: JSON.stringify({ test: true, source: 'chrome-extension' })
         }, 5000);
 
         if (response.ok) {
             return { success: true, message: 'n8n webhook connected successfully' };
+        } else if (response.status === 404) {
+            return { success: false, message: 'Webhook not found. Create webhook in n8n first.' };
         } else {
-            return { success: false, message: `n8n webhook error: ${response.status}` };
+            return { success: false, message: `n8n returned: ${response.status}` };
         }
     } catch (error) {
+        // More user-friendly error messages
+        if (error.message.includes('Failed to fetch')) {
+            return { success: false, message: 'Cannot reach n8n. Is it running?' };
+        }
         return { success: false, message: `Connection failed: ${error.message}` };
     }
 }
