@@ -925,16 +925,19 @@ class FloatingAssistant {
 
     attachEventListeners() {
         const toggle = document.getElementById('n8n-widget-toggle');
-        const closeBtn = document.getElementById('n8n-chat-close');
-        const sendBtn = document.getElementById('n8n-send-btn');
-        const input = document.getElementById('n8n-chat-input');
-        const minimizeBtn = document.getElementById('n8n-chat-minimize');
-        const maximizeBtn = document.getElementById('n8n-chat-maximize');
-        const dockBtn = document.getElementById('n8n-chat-dock');
-        const attachBtn = document.getElementById('n8n-attach-btn');
+        const closeBtn = document.getElementById('n8n-close');
+        const sendBtn = document.getElementById('n8n-send');
+        const input = document.getElementById('n8n-input');
+        const maximizeBtn = document.getElementById('n8n-maximize');
+        const dockBtn = document.getElementById('n8n-dock');
+        const attachBtn = document.getElementById('n8n-attach');
+        const screenshotBtn = document.getElementById('n8n-screenshot');
+        const voiceBtn = document.getElementById('n8n-voice');
+        const themeBtn = document.getElementById('n8n-theme');
         const fileInput = document.getElementById('n8n-file-input');
-        const header = document.getElementById('n8n-chat-header');
+        const header = document.querySelector('.n8n-chat-header');
         const resizeHandle = document.getElementById('n8n-resize-handle');
+        const quickActions = document.querySelectorAll('.n8n-quick-action');
 
         if (toggle) {
             toggle.addEventListener('click', () => this.toggleChat());
@@ -957,10 +960,6 @@ class FloatingAssistant {
             });
         }
 
-        if (minimizeBtn) {
-            minimizeBtn.addEventListener('click', () => this.minimizeChat());
-        }
-
         if (maximizeBtn) {
             maximizeBtn.addEventListener('click', () => this.maximizeChat());
         }
@@ -973,9 +972,29 @@ class FloatingAssistant {
             attachBtn.addEventListener('click', () => fileInput?.click());
         }
 
+        if (screenshotBtn) {
+            screenshotBtn.addEventListener('click', () => this.takeScreenshot());
+        }
+
+        if (voiceBtn) {
+            voiceBtn.addEventListener('click', () => this.toggleVoiceInput());
+        }
+
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => this.toggleTheme());
+        }
+
         if (fileInput) {
             fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
         }
+
+        // Quick actions
+        quickActions.forEach(action => {
+            action.addEventListener('click', (e) => {
+                const actionType = e.target.dataset.action;
+                this.handleQuickAction(actionType);
+            });
+        });
 
         if (header && !this.isDocked) {
             this.setupDragging(header);
@@ -1218,7 +1237,7 @@ class FloatingAssistant {
     }
 
     async sendMessage() {
-        const input = document.getElementById('n8n-chat-input');
+        const input = document.getElementById('n8n-input');
         const message = input?.value.trim();
 
         if (!message) return;
@@ -1232,7 +1251,7 @@ class FloatingAssistant {
         try {
             // Send message to background script
             const response = await this.sendToBackground({
-                type: 'assistant_message',
+                action: 'sendMessage',
                 message: message,
                 context: {
                     url: window.location.href,
@@ -1288,24 +1307,25 @@ class FloatingAssistant {
     }
 
     addMessage(text, sender) {
-        const messagesContainer = document.getElementById('n8n-chat-messages');
+        const messagesContainer = document.getElementById('n8n-messages');
         if (!messagesContainer) return;
 
+        // Hide welcome message if this is the first real message
+        const welcomeMessage = messagesContainer.querySelector('.n8n-welcome-message');
+        if (welcomeMessage && this.messages.length === 0) {
+            welcomeMessage.style.display = 'none';
+        }
+
         const messageDiv = document.createElement('div');
-        messageDiv.className = `n8n-message n8n-message-${sender}`;
+        messageDiv.className = `n8n-message ${sender}`;
 
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        messageDiv.innerHTML = `
-            <div class="n8n-message-avatar">
-                ${sender === 'user' ? '👤' : '🤖'}
-            </div>
-            <div class="n8n-message-content">
-                <div class="n8n-message-text">${this.escapeHtml(text)}</div>
-                <div class="n8n-message-time">${time}</div>
-            </div>
-        `;
+        const messageBubble = document.createElement('div');
+        messageBubble.className = 'n8n-message-bubble';
+        messageBubble.textContent = text;
 
+        messageDiv.appendChild(messageBubble);
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
@@ -1314,16 +1334,20 @@ class FloatingAssistant {
 
     showTyping() {
         this.isTyping = true;
+        const messagesContainer = document.getElementById('n8n-messages');
+        if (!messagesContainer) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'n8n-message assistant';
+        messageDiv.id = 'typing-indicator';
+
         const indicator = document.createElement('div');
         indicator.className = 'n8n-typing-indicator';
-        indicator.id = 'typing-indicator';
         indicator.innerHTML = '<span></span><span></span><span></span>';
 
-        const messagesContainer = document.getElementById('n8n-chat-messages');
-        if (messagesContainer) {
-            messagesContainer.appendChild(indicator);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
+        messageDiv.appendChild(indicator);
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     hideTyping() {
@@ -1344,11 +1368,56 @@ class FloatingAssistant {
 
     focusInput() {
         setTimeout(() => {
-            const input = document.getElementById('n8n-chat-input');
+            const input = document.getElementById('n8n-input');
             if (input) {
                 input.focus();
             }
         }, 100);
+    }
+
+    takeScreenshot() {
+        // Send screenshot request to background
+        this.sendToBackground({ action: 'captureScreen' })
+            .then(response => {
+                if (response && response.screenshot) {
+                    this.addMessage('📸 Screenshot captured successfully!', 'assistant');
+                } else {
+                    this.addMessage('❌ Failed to capture screenshot', 'assistant');
+                }
+            })
+            .catch(error => {
+                console.error('Screenshot error:', error);
+                this.addMessage('❌ Screenshot failed: ' + error.message, 'assistant');
+            });
+    }
+
+    toggleVoiceInput() {
+        // Placeholder for voice input functionality
+        this.addMessage('🎤 Voice input not yet implemented', 'assistant');
+    }
+
+    toggleTheme() {
+        this.theme = this.theme === 'light' ? 'dark' : 'light';
+        this.updateTheme();
+        this.savePreferences();
+    }
+
+    handleQuickAction(actionType) {
+        const actions = {
+            'summarize': '📄 Please summarize this page',
+            'extract': '🔍 Extract the key information from this page',
+            'translate': '🌐 Translate this page content',
+            'explain': '💡 Explain what this page is about'
+        };
+
+        const message = actions[actionType];
+        if (message) {
+            const input = document.getElementById('n8n-input');
+            if (input) {
+                input.value = message;
+                input.focus();
+            }
+        }
     }
 
     escapeHtml(text) {
@@ -1480,6 +1549,17 @@ class FloatingAssistant {
     checkDesktopConnection() {
         // Placeholder for desktop app connection check
         console.log('Checking desktop connection...');
+    }
+
+    getResourceURL(path) {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
+            return chrome.runtime.getURL(path);
+        }
+        // Fallback for testing - use data URL for icon
+        if (path.includes('icon-48.png')) {
+            return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7L12 12L22 7L12 2Z"/><path d="M2 17L12 22L22 17"/><path d="M2 12L12 17L22 12"/></svg>';
+        }
+        return `./${path}`;
     }
 }
 

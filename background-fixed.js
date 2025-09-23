@@ -3,15 +3,21 @@
  * This is a production-ready implementation with comprehensive error management
  */
 
-// Import all required modules
-importScripts(
-    'websocket-client-fixed.js',
-    'screenshot.js',
-    'context7-integration.js',
-    'n8n-docs-integration.js',
-    'chrome-docs-integration.js',
-    'opal-docs-integration.js'
-);
+// Import all required modules with error handling
+try {
+    importScripts(
+        'websocket-client-fixed.js',
+        'screenshot.js',
+        'context7-integration.js',
+        'n8n-docs-integration.js',
+        'chrome-docs-integration.js',
+        'opal-docs-integration.js'
+    );
+    console.log('All modules imported successfully');
+} catch (error) {
+    console.warn('Some modules failed to load:', error.message);
+    // Continue execution - modules are optional
+}
 
 // Global state management
 const ExtensionState = {
