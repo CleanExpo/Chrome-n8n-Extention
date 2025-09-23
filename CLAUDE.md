@@ -1,10 +1,71 @@
-# CLAUDE.md
+# CLAUDE.md - PRODUCTION STANDARDS
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides **MANDATORY** guidance to Claude Code when working with this repository. These are not suggestions - they are requirements for maintaining production-quality code.
+
+## CRITICAL: Work Standards
+
+### You are a world-class software engineer. This means:
+1. **NEVER do partial fixes** - Fix ALL related issues comprehensively
+2. **ALWAYS handle errors properly** - No unhandled promises, no ignored exceptions
+3. **TEST everything** - Create test files, verify functionality
+4. **THINK before coding** - Analyze the entire problem space first
+5. **DOCUMENT critical decisions** - Explain why, not just what
+
+### Error Handling Requirements
+- **EVERY async function** must have try-catch blocks
+- **EVERY API call** must have timeout and fallback logic
+- **EVERY user-facing error** must have helpful messages
+- **NEVER let errors crash the extension**
 
 ## Project Overview
 
-This is an n8n AI Assistant Chrome Extension (Manifest V3) with integrated documentation systems and MCP (Model Context Protocol) support for Playwright automation. The extension provides an AI-powered chat interface that automatically fetches relevant documentation for n8n workflows, Chrome Extension development, and modern JavaScript libraries.
+This is a production-ready n8n AI Assistant Chrome Extension (Manifest V3) with:
+- Integrated documentation systems (Chrome, n8n, Opal AI, Context7)
+- Robust error handling and fallback chains
+- Comprehensive API management
+- Fixed popup rendering (420x650px)
+- Enhanced floating widget with resize functionality
+- MCP (Model Context Protocol) support for Playwright automation
+
+## FIXED Issues (DO NOT REGRESS)
+
+### 1. Popup Thin Strip Issue - PERMANENTLY FIXED
+- **Problem**: Popup appeared as thin vertical strip
+- **Solution**: Multiple enforcement layers in popup-fixed.html/css/js
+- **Key Files**:
+  - `popup/popup-fixed.html` - Inline styles force 420x650px
+  - `popup/popup-fixed.js` - Runtime dimension enforcement
+  - `manifest.json` - Points to fixed popup
+- **NEVER** remove dimension enforcement code
+
+### 2. API Connection Errors - PERMANENTLY FIXED
+- **Problem**: Multiple 404/connection refused errors
+- **Solution**: Proper API checking and graceful fallbacks
+- **Key Files**:
+  - `background-fixed.js` - Complete error handling
+  - `context7-integration.js` - Availability checking
+- **ALWAYS** check if service is configured before attempting connection
+- **NEVER** let API errors crash the extension
+
+### 3. Error Handling - COMPREHENSIVE
+- **Every API call** has timeout (fetchWithTimeout)
+- **Every async function** has try-catch
+- **Every user action** has feedback
+- **Fallback chain**: n8n → OpenAI → Error message
+
+## Critical Files (DO NOT BREAK)
+
+### Core Fixed Files
+- `background-fixed.js` - Production-ready background script with complete error handling
+- `popup/popup-fixed.html` - Properly sized popup (420x650px)
+- `popup/popup-fixed.js` - Popup logic with API status checking
+- `manifest.json` - MUST point to fixed versions
+
+### API Integration Files
+- `context7-integration.js` - Has availability checking
+- `chrome-docs-integration.js` - Documentation provider
+- `n8n-docs-integration.js` - n8n documentation
+- `opal-docs-integration.js` - Opal AI documentation
 
 ## Development Commands
 
@@ -48,30 +109,31 @@ npm run mcp:debug
 
 ### Core Components
 
-**Background Service Worker (`background.js`)**
-- Central message hub handling all communication between components
-- Integrates three documentation systems: Context7 (library docs), n8n docs, and Chrome Extension docs
-- Manages AI assistant messages with fallback from n8n workflow to direct OpenAI API
-- Handles WebSocket connections, screenshot capture, and Chrome API operations
+**Background Service Worker (`background-fixed.js`)**
+- Central message hub with complete error handling
+- Proper API fallback chain (n8n → OpenAI → Error)
+- Timeout handling for all API calls
+- State management with ExtensionState object
 
 **Floating Widget System (`floating-widget-enhanced.js`)**
-- Self-contained chat interface injected into web pages
-- Implements sidebar dock mode that shifts page content
-- Handles Chrome API fallbacks for non-extension environments
-- Manages its own message passing and state
+- Self-contained chat interface with resize functionality
+- Keyboard shortcuts (Ctrl+Arrow keys for resize)
+- Visual resize handle with live dimension display
+- Chrome API fallbacks for non-extension environments
 
 **Content Script (`content.js`)**
-- Injects the floating widget script
-- Bridges communication between page context and extension context
-- Handles custom events for widget control
+- Cache-busting for script loading
+- Error recovery mechanisms
+- Proper message passing with error handling
 
 ### Documentation Integration Pattern
 
 The extension automatically enhances AI responses by detecting keywords and fetching relevant documentation:
 
-1. **Chrome Extension queries** → `ChromeDocsIntegration` class fetches from `/chrome-extension-docs/*.md`
-2. **n8n workflow queries** → `N8nDocsIntegration` class fetches from `/n8n-docs/*.md`
-3. **Library/framework queries** → `Context7Integration` class fetches from Context7 API
+1. **Chrome Extension queries** → `ChromeDocsIntegration` class
+2. **n8n workflow queries** → `N8nDocsIntegration` class
+3. **Library/framework queries** → `Context7Integration` class
+4. **Opal AI queries** → `OpalDocsIntegration` class
 
 All documentation is injected into the AI prompt context before sending to OpenAI/n8n.
 
@@ -82,12 +144,11 @@ User Input → Floating Widget → Window.postMessage → Content Script
     ↓
 Background.js (handleAssistantMessage)
     ↓
-Documentation Fetching (parallel):
-    - Context7 API (if library detected)
-    - n8n Docs (if workflow keywords)
-    - Chrome Docs (if extension keywords)
+Check API Configuration
     ↓
-n8n Webhook (primary) → Fallback → OpenAI API
+Build Enhanced Message (with docs)
+    ↓
+Try n8n (if configured) → Try OpenAI (if configured) → Fallback Message
     ↓
 Response → Content Script → Floating Widget → User
 ```
@@ -98,15 +159,12 @@ The extension uses a dual storage approach:
 - **Primary**: `chrome.storage.sync` for cross-device sync
 - **Fallback**: `localStorage` for non-extension contexts
 
-All Chrome APIs have fallback implementations to support testing environments.
-
 ### Enhanced UI System
 
-Two parallel UI systems exist:
-1. **Original** (`popup.html`, `options.html`, `floating-widget.js`)
-2. **Enhanced** (`popup-enhanced.html`, `options-enhanced.html`, `floating-widget-enhanced.js`)
-
-The enhanced versions include modern CSS with variables, dark mode support, animations, and glassmorphism effects. Currently using enhanced versions in manifest.json.
+Using fixed versions for stability:
+- **Popup**: `popup-fixed.html`, `popup-fixed.css`, `popup-fixed.js`
+- **Floating Widget**: `floating-widget-enhanced.js` with resize
+- **Options**: `options-enhanced.html` with API testing
 
 ## Key Implementation Details
 
@@ -123,27 +181,87 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
 
 ### AI Assistant Message Enhancement
 
-The `handleAssistantMessage` function in background.js:
-1. Detects keywords for Chrome/n8n/library documentation
-2. Fetches relevant docs in parallel
-3. Appends documentation to user message
-4. Tries n8n webhook first, falls back to OpenAI API
+The `handleAssistantMessage` function in background-fixed.js:
+1. Checks API configuration status
+2. Builds enhanced message with documentation
+3. Tries APIs in order with proper timeouts
+4. Returns helpful error messages if all fail
 
-### MCP Integration
+### Error Handling Pattern
 
-Playwright MCP server (`/playwright-mcp/`) uses Server-Sent Events for communication. The `mcp-sse-client.js` handles the SSE protocol for browser automation tasks.
+```javascript
+async function apiCall() {
+    try {
+        const response = await fetchWithTimeout(url, options, timeout);
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (error) {
+        console.log('API error (non-critical):', error.message);
+        return null; // Graceful fallback
+    }
+}
+```
 
 ## Configuration Files
 
-- **manifest.json**: Main Chrome Extension configuration (using enhanced UI files)
-- **manifest-enhanced.json**: Backup with additional permissions
+- **manifest.json**: Points to fixed versions of scripts
 - **.env files**: API keys and server URLs (not committed)
-- **AI_ASSISTANT_SETUP.md**: User setup guide for API configuration
+- **API_SETUP_GUIDE.md**: Comprehensive API configuration guide
+- **POPUP-FIX-GUIDE.md**: Popup sizing fix documentation
+- **TROUBLESHOOTING.md**: General troubleshooting guide
 
 ## Documentation Files
 
-- `/n8n-docs/`: n8n workflow documentation (4 files)
-- `/chrome-extension-docs/`: Chrome Extension development docs (3 files)
-- `CONTEXT7_SETUP.md`: Context7 integration guide
-- `N8N_DOCS_INTEGRATION.md`: n8n documentation integration guide
-- `CHROME_DOCS_INTEGRATION.md`: Chrome docs integration guide
+- `/n8n-docs/`: n8n workflow documentation
+- `/chrome-extension-docs/`: Chrome Extension development docs
+- `/opal-ai-docs/`: Opal AI documentation (Google Labs no-code AI)
+- `test-extension-complete.html`: Comprehensive test suite
+
+## MANDATORY Production Standards
+
+### Code Quality Requirements
+1. **COMPREHENSIVE FIXES ONLY** - Never do partial fixes
+2. **ERROR HANDLING EVERYWHERE** - No exceptions
+3. **TEST BEFORE DECLARING COMPLETE** - Always verify
+4. **BACKWARD COMPATIBILITY** - Don't break existing functionality
+5. **PERFORMANCE AWARE** - Consider load times and memory
+
+### When Fixing Issues
+1. **ANALYZE COMPLETELY** - Understand all related code
+2. **FIX ROOT CAUSE** - Not just symptoms
+3. **TEST THOROUGHLY** - Create test files
+4. **DOCUMENT CHANGES** - Explain what and why
+5. **UPDATE THIS FILE** - Add new fixes to FIXED Issues section
+
+### API Handling Rules
+1. **CHECK CONFIGURATION FIRST** - Don't attempt if not configured
+2. **USE TIMEOUTS** - Maximum 30s for OpenAI, 10s for others
+3. **PROVIDE FALLBACKS** - Always have plan B
+4. **LOG APPROPRIATELY** - Errors as warnings, not crashes
+5. **USER-FRIENDLY MESSAGES** - Explain what to do
+
+### File Creation Rules
+- **CREATE test files** - Testing is mandatory
+- **CREATE fixed versions** - When original is broken
+- **UPDATE existing files** - When possible
+- **DOCUMENT in CLAUDE.md** - Critical changes only
+
+## Testing Requirements
+
+### Before Declaring Any Fix Complete
+1. **Create test file** - `test-[feature].html`
+2. **Verify in browser** - Actually load and test
+3. **Check console** - No errors allowed
+4. **Test error cases** - What happens when things fail?
+5. **Document results** - What was tested and results
+
+### Test Coverage Must Include
+- **Happy path** - Normal operation
+- **Error cases** - Invalid input, API failures
+- **Edge cases** - Timeouts, rate limits
+- **Recovery** - Can user recover from errors?
+
+---
+
+**REMEMBER**: You are a world-class engineer. Act like one. Every line of code matters. Every error must be handled. Every fix must be complete.

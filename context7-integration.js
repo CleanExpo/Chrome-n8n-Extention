@@ -6,6 +6,7 @@
 class Context7Integration {
     constructor(apiKey = null) {
         this.apiKey = apiKey;
+        // Note: Context7 API endpoint may need configuration
         this.baseUrl = 'https://api.context7.com';
         this.headers = {
             'User-Agent': 'n8n-Chrome-Extension/1.0.0',
@@ -15,6 +16,24 @@ class Context7Integration {
         if (this.apiKey) {
             this.headers['Authorization'] = `Bearer ${this.apiKey}`;
         }
+
+        // Check if Context7 API is accessible
+        this.isAvailable = false;
+        this.checkAvailability();
+    }
+
+    async checkAvailability() {
+        try {
+            // Simple check to see if the API endpoint exists
+            const response = await fetch(this.baseUrl + '/health', {
+                method: 'HEAD',
+                mode: 'no-cors' // Avoid CORS issues for availability check
+            });
+            this.isAvailable = true;
+        } catch (error) {
+            console.log('Context7 API not reachable:', error.message);
+            this.isAvailable = false;
+        }
     }
 
     /**
@@ -23,6 +42,12 @@ class Context7Integration {
      * @returns {Promise<object>} Resolved library information
      */
     async resolveLibrary(libraryName) {
+        // Skip if API is not available
+        if (!this.isAvailable) {
+            console.log('Context7 API not available, skipping library resolution');
+            return null;
+        }
+
         try {
             const response = await fetch(
                 `${this.baseUrl}/resolve/${encodeURIComponent(libraryName)}`,
@@ -33,13 +58,14 @@ class Context7Integration {
             );
 
             if (!response.ok) {
-                throw new Error(`Failed to resolve library: ${response.statusText}`);
+                console.log(`Library ${libraryName} not found in Context7`);
+                return null;
             }
 
             return await response.json();
         } catch (error) {
-            console.error('Error resolving library:', error);
-            throw error;
+            console.log('Context7 resolve error:', error.message);
+            return null;
         }
     }
 

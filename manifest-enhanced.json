@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "Professional workflow automation agent for n8n - Enhance your browsing with powerful automation capabilities",
 
+  "minimum_chrome_version": "102",
+
   "permissions": [
     "storage",
     "activeTab",
@@ -15,7 +17,9 @@
     "clipboardRead",
     "clipboardWrite",
     "webNavigation",
-    "scripting"
+    "scripting",
+    "alarms",
+    "declarativeNetRequest"
   ],
 
   "host_permissions": [
@@ -24,14 +28,17 @@
   ],
 
   "background": {
-    "service_worker": "background-fixed.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
 
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": false,
+      "match_about_blank": false
     }
   ],
 
@@ -39,23 +46,15 @@
     {
       "resources": [
         "images/*",
-        "floating-widget-enhanced.js",
-        "floating-widget-enhanced.css",
-        "popup/popup-chat.html",
-        "popup/popup-enhanced.html",
-        "popup/popup-enhanced.css",
-        "popup/popup-enhanced.js",
-        "n8n-docs/*.md",
-        "chrome-extension-docs/*.md",
-        "opal-ai-docs/*.md",
-        "opal-docs-integration.js"
+        "floating-widget.js",
+        "popup/popup-chat.html"
       ],
       "matches": ["<all_urls>"]
     }
   ],
 
   "action": {
-    "default_popup": "popup/popup-fixed.html",
+    "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "images/icon-16.png",
       "48": "images/icon-48.png",
@@ -64,10 +63,10 @@
     "default_title": "n8n AI Assistant - Click to open"
   },
 
-  "options_page": "options/options-enhanced.html",
+  "options_page": "options/options.html",
 
   "options_ui": {
-    "page": "options/options-enhanced.html",
+    "page": "options/options.html",
     "open_in_tab": true
   },
 
@@ -75,5 +74,29 @@
     "16": "images/icon-16.png",
     "48": "images/icon-48.png",
     "128": "images/icon-128.png"
+  },
+
+  "commands": {
+    "toggle-widget": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+A",
+        "mac": "Command+Shift+A"
+      },
+      "description": "Toggle n8n Assistant widget"
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+N",
+        "mac": "Command+Shift+N"
+      }
+    }
+  },
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+
+  "declarative_net_request": {
+    "rule_resources": []
   }
 }

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>n8n AI Assistant</title>
+    <style>
+        /* CRITICAL: Force exact dimensions before anything else loads */
+        html {
+            width: 420px !important;
+            height: 650px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body {
+            width: 420px !important;
+            height: 650px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            background: #f8fafc;
+        }
+
+        /* Container must also have exact dimensions */
+        .popup-main {
+            width: 420px !important;
+            height: 650px !important;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 13px;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        /* Status Section */
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            color: #2e7d32;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Buttons */
+        .button {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .button:hover {
+            border-color: #667eea;
+            background: #f8fafc;
+            transform: translateX(2px);
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .button-primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .button-primary:hover {
+            background: #5568d3;
+            border-color: #5568d3;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #cbd5e1;
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .slider {
+            background: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 12px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .stat {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Connection Status */
+        .connection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .connection-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .connection-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .connection-dot.active {
+            background: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="popup-main">
+        <div class="header">
+            <h1>🤖 n8n AI Assistant</h1>
+            <p>Your intelligent browsing companion</p>
+        </div>
+
+        <div class="content">
+            <!-- Status Section -->
+            <div class="section">
+                <h2>📊 Status</h2>
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>AI Assistant Active</span>
+                </div>
+                <div class="toggle-container">
+                    <span>Enable Assistant</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleAssistant" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <h2>⚡ Quick Actions</h2>
+                <button class="button button-primary" id="openChat">
+                    <span>💬</span>
+                    <span>Open Chat Window</span>
+                </button>
+                <button class="button" id="captureScreen">
+                    <span>📸</span>
+                    <span>Capture Screenshot</span>
+                </button>
+                <button class="button" id="extractContent">
+                    <span>📄</span>
+                    <span>Extract Page Content</span>
+                </button>
+            </div>
+
+            <!-- Connections -->
+            <div class="section">
+                <h2>🔗 API Connections</h2>
+                <div class="connection-grid">
+                    <div class="connection-item">
+                        <span class="connection-dot" id="openai-status"></span>
+                        <span>OpenAI</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="n8n-status"></span>
+                        <span>n8n Workflow</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="context7-status"></span>
+                        <span>Context7</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="integration-status"></span>
+                        <span>Integration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration -->
+            <div class="section">
+                <h2>⚙️ Configuration</h2>
+                <button class="button" id="openSettings">
+                    <span>🔧</span>
+                    <span>Settings / API Keys</span>
+                </button>
+                <button class="button" id="openDocs">
+                    <span>📚</span>
+                    <span>Documentation</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="section">
+                <h2>📈 Usage Statistics</h2>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="messageCount">0</div>
+                        <div class="stat-label">Messages</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="automationCount">0</div>
+                        <div class="stat-label">Automations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="https://n8n.io" target="_blank">n8n.io</a> •
+            <a href="#" id="helpLink">Help</a> •
+            <a href="https://github.com/CleanExpo/Chrome-n8n-Extention" target="_blank">GitHub</a>
+        </div>
+    </div>
+
+    <script src="popup-fixed.js"></script>
+</body>
+</html>

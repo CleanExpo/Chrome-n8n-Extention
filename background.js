@@ -593,32 +593,42 @@ async function handleAssistantMessage(request, sendResponse) {
             }
         }
 
-        // Try n8n workflow first
-        try {
-            const integrationUrl = settings.integrationServer || 'http://localhost:3000';
-            const response = await fetch(`${integrationUrl}/n8n/trigger/assistant-chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-OpenAI-Key': settings.openaiKey || '',
-                    'X-N8N-URL': settings.n8nUrl || ''
-                },
-                body: JSON.stringify({
-                    message: message + docContext + n8nContext + chromeContext + opalContext,
-                    context: context,
-                    timestamp: new Date().toISOString(),
-                    openaiKey: settings.openaiKey
-                })
-            });
+        // Try n8n workflow first - only if properly configured
+        const shouldTryN8n = settings.integrationServer &&
+                            settings.integrationServer !== 'http://localhost:3000' &&
+                            !settings.integrationServer.includes('localhost');
 
-            if (response.ok) {
-                const result = await response.json();
-                reply = result.result?.reply || result.reply || result.message;
-            } else {
-                throw new Error('n8n workflow not available');
+        if (shouldTryN8n) {
+            try {
+                const integrationUrl = settings.integrationServer;
+                console.log('Attempting n8n integration at:', integrationUrl);
+
+                const response = await fetch(`${integrationUrl}/n8n/trigger/assistant-chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-OpenAI-Key': settings.openaiKey || '',
+                        'X-N8N-URL': settings.n8nUrl || ''
+                    },
+                    body: JSON.stringify({
+                        message: message + docContext + n8nContext + chromeContext + opalContext,
+                        context: context,
+                        timestamp: new Date().toISOString(),
+                        openaiKey: settings.openaiKey
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    reply = result.result?.reply || result.reply || result.message;
+                    console.log('n8n integration successful');
+                }
+            } catch (n8nError) {
+                console.log('n8n integration not available:', n8nError.message);
             }
-        } catch (n8nError) {
-            console.log('n8n workflow not available, trying OpenAI directly...');
+        } else {
+            console.log('n8n integration skipped - using direct OpenAI');
+        }
 
             // Fallback to direct OpenAI API
             if (settings.openaiKey) {
