@@ -429,6 +429,76 @@ class UnifiedAssistant {
     }
 
     /**
+     * Google Search Console operations
+     */
+    async searchConsoleCommand(operation, params = {}) {
+        if (!this.capabilities.google) {
+            return { error: 'Search Console API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('searchconsole', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Fact Check operations
+     */
+    async factCheckCommand(operation, params = {}) {
+        if (!this.capabilities.system) {
+            return { error: 'Fact Check API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('factcheck', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Document AI operations
+     */
+    async documentAICommand(operation, params = {}) {
+        if (!this.capabilities.google) {
+            return { error: 'Document AI API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('documentai', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * API Keys management operations
+     */
+    async apiKeysCommand(operation, params = {}) {
+        if (!this.capabilities.google) {
+            return { error: 'API Keys management not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('apikeys', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Chrome Verified Access operations
+     */
+    async verifiedAccessCommand(operation, params = {}) {
+        if (!this.capabilities.google) {
+            return { error: 'Verified Access API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('verifiedaccess', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
      * Handle unknown command with AI fallback
      */
     async handleUnknownCommand(command) {
