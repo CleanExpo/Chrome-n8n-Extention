@@ -442,13 +442,23 @@ async function tryN8nWorkflow(message, context) {
         const url = ExtensionState.settings.n8nWebhookUrl;
         if (!url) return null;
 
+        const headers = { 'Content-Type': 'application/json' };
+
+        // Add n8n API key for cloud instances
+        const isCloud = url.includes('.n8n.cloud') || url.includes('n8n.cloud');
+        if (isCloud && ExtensionState.settings.n8nApiKey) {
+            headers['X-N8N-API-KEY'] = ExtensionState.settings.n8nApiKey;
+            headers['Authorization'] = `Bearer ${ExtensionState.settings.n8nApiKey}`;
+        }
+
         const response = await fetchWithTimeout(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify({
                 message,
                 context,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                user: context?.user || 'chrome-extension'
             })
         }, APIConfig.n8n.timeout);
 
@@ -754,9 +764,18 @@ async function testN8n(url) {
         }
 
         // Try to POST to webhook endpoint
+        const headers = { 'Content-Type': 'application/json' };
+
+        // Add API key if provided (for n8n cloud)
+        const settings = await getStoredSettings();
+        if (settings.n8nApiKey && isCloud) {
+            headers['X-N8N-API-KEY'] = settings.n8nApiKey;
+            headers['Authorization'] = `Bearer ${settings.n8nApiKey}`;
+        }
+
         const response = await fetchWithTimeout(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify({ test: true, source: 'chrome-extension' })
         }, 5000);
 
