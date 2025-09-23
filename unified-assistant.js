@@ -23,7 +23,7 @@ class UnifiedAssistant {
      * Initialize all systems
      */
     async initialize() {
-        console.log('🚀 Initializing Unified AI Assistant...');
+        console.log('🚀 Initializing Personal AI Assistant...');
 
         // Try to connect to native host
         if (this.systemAutomation) {
@@ -32,32 +32,53 @@ class UnifiedAssistant {
 
             if (result.success) {
                 console.log('✅ System automation ready');
+                
+                // Test secure authentication
+                try {
+                    const authResult = await this.authenticateGoogle();
+                    if (authResult.success) {
+                        this.capabilities.google = true;
+                        this.capabilities.ai = true; // Gemini available through Google
+                        this.userEmail = authResult.email;
+                        console.log(`✅ Google APIs authenticated as: ${authResult.email}`);
+                    }
+                } catch (e) {
+                    console.log('⚠️ Google APIs not authenticated - run personal_setup.py first');
+                }
+
                 // Check for voice capabilities
                 try {
-                    await this.systemAutomation.speak('Assistant ready');
+                    await this.systemAutomation.speak('Personal Assistant ready');
                     this.capabilities.voice = true;
                     console.log('✅ Voice control ready');
                 } catch (e) {
                     console.log('⚠️ Voice control not available');
                 }
             } else {
-                console.log('⚠️ System automation not available - install native host');
+                console.log('⚠️ System automation not available - run native-host/setup.bat');
             }
         }
 
-        // Check for AI capabilities
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-            const settings = await chrome.storage.sync.get(['openaiKey']);
-            this.capabilities.ai = !!settings.openaiKey;
+        // Enhanced capabilities
+        this.capabilities.gmail = this.capabilities.google;
+        this.capabilities.drive = this.capabilities.google;
+        this.capabilities.sheets = this.capabilities.google;
+        this.capabilities.calendar = this.capabilities.google;
+        this.capabilities.gemini = this.capabilities.google;
 
-            if (this.capabilities.ai) {
-                console.log('✅ AI capabilities ready');
-            } else {
-                console.log('⚠️ Add OpenAI API key for AI features');
-            }
+        console.log('📊 Personal Assistant Capabilities:', this.capabilities);
+    }
+
+    /**
+     * Authenticate with Google APIs using secure system
+     */
+    async authenticateGoogle() {
+        if (!this.systemAutomation || !this.capabilities.system) {
+            throw new Error('Native host not available');
         }
 
-        console.log('📊 Capabilities:', this.capabilities);
+        const result = await this.systemAutomation.sendMessage('authenticate', {});
+        return result;
     }
 
     /**
@@ -314,24 +335,97 @@ class UnifiedAssistant {
      * Execute AI command
      */
     async executeAICommand(intent) {
-        if (!this.capabilities.ai) {
+        if (!this.capabilities.gemini) {
             return {
-                error: 'AI capabilities not available',
-                help: 'Add OpenAI API key in extension settings'
+                error: 'Gemini AI not available',
+                help: 'Ensure Google APIs are authenticated and Gemini key is configured'
             };
         }
 
-        // Send to OpenAI for processing
-        const response = await chrome.runtime.sendMessage({
-            action: 'assistantMessage',
-            message: intent.command,
+        // Send to Gemini API through native host
+        const result = await this.systemAutomation.sendMessage('gemini', {
+            prompt: intent.command,
             context: {
                 capabilities: this.capabilities,
-                currentPage: window.location.href
+                currentPage: window.location.href,
+                userEmail: this.userEmail
             }
         });
 
-        return response;
+        return result;
+    }
+
+    /**
+     * Gmail operations
+     */
+    async gmailCommand(operation, params = {}) {
+        if (!this.capabilities.gmail) {
+            return { error: 'Gmail API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('gmail', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Google Drive operations
+     */
+    async driveCommand(operation, params = {}) {
+        if (!this.capabilities.drive) {
+            return { error: 'Google Drive API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('drive', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Google Sheets operations
+     */
+    async sheetsCommand(operation, params = {}) {
+        if (!this.capabilities.sheets) {
+            return { error: 'Google Sheets API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('sheets', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Google Calendar operations
+     */
+    async calendarCommand(operation, params = {}) {
+        if (!this.capabilities.calendar) {
+            return { error: 'Google Calendar API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('calendar', {
+            operation: operation,
+            params: params
+        });
+    }
+
+    /**
+     * Gemini AI request
+     */
+    async askGemini(prompt, context = null) {
+        if (!this.capabilities.gemini) {
+            return { error: 'Gemini API not available' };
+        }
+
+        return await this.systemAutomation.sendMessage('gemini', {
+            prompt: prompt,
+            context: context || {
+                currentPage: window.location.href,
+                userEmail: this.userEmail
+            }
+        });
     }
 
     /**
