@@ -75,26 +75,25 @@ class WebSocketClient {
                     this.handleMessage(message);
                 } catch (error) {
                     console.error('Error parsing WebSocket message:', error);
-                    console.error('Raw message:', event.data);
                 }
             };
 
             this.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                this.connected = false;
-                clearTimeout(connectionTimeout);
+                try {
+                    console.error('WebSocket error:', error);
+                    this.handleConnectionFailure();
+                } catch (err) {
+                    console.error('Error in WebSocket onerror handler:', err);
+                }
             };
 
             this.ws.onclose = (event) => {
                 try {
-                    clearTimeout(connectionTimeout);
                     console.log('WebSocket closed:', event.code, event.reason);
-
                     this.connected = false;
                     this.stopHeartbeat();
-                    this.notifyConnectionStatus(false);
 
-                    // Only reconnect if not manually closed
+                    // Only attempt reconnect if not manually closed
                     if (event.code !== 1000) {
                         this.handleConnectionFailure();
                     }
@@ -158,8 +157,8 @@ class WebSocketClient {
     startHeartbeat() {
         this.stopHeartbeat();
         this.heartbeatTimer = setInterval(() => {
-            if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.send('ping', {}, null, true);
+            if (this.isConnected()) {
+                this.send('ping', {}, null);
             }
         }, this.heartbeatInterval);
     }
@@ -178,83 +177,58 @@ class WebSocketClient {
      * Process queued messages
      */
     processMessageQueue() {
-        try {
-            const queueCopy = [...this.messageQueue];
-            this.messageQueue = [];
+        while (this.messageQueue.length > 0 && this.isConnected()) {
+            const msg = this.messageQueue.shift();
 
-            for (const msg of queueCopy) {
-                if (msg.retries < 3) {
-                    this.send(msg.type, msg.data, msg.callback);
-                } else {
-                    console.log('Message dropped after max retries:', msg.type);
-                    if (msg.callback) {
-                        msg.callback({ error: 'Message dropped after max retries' });
-                    }
+            // Check message age
+            const age = Date.now() - msg.timestamp;
+            if (age < 60000) { // Process if less than 1 minute old
+                this.send(msg.type, msg.data, msg.callback);
+            } else {
+                console.log('Message too old, dropping:', msg.type);
+                if (msg.callback) {
+                    msg.callback({ error: 'Message expired' });
                 }
             }
-        } catch (error) {
-            console.error('Error processing message queue:', error);
         }
     }
 
     /**
-     * Send message through WebSocket with error handling
+     * Send message through WebSocket
      */
-    send(type, data, callback, skipQueue = false) {
-        try {
-            const messageId = this.generateId();
-            const message = {
-                id: messageId,
-                type: type,
-                data: data,
-                timestamp: Date.now()
-            };
+    send(type, data, callback = null) {
+        if (this.isConnected()) {
+            try {
+                const message = {
+                    id: this.generateId(),
+                    type: type,
+                    data: data,
+                    timestamp: Date.now()
+                };
 
-            // Store callback if provided
-            if (callback) {
-                this.callbacks.set(messageId, {
-                    callback: callback,
-                    timestamp: Date.now(),
-                    timeout: setTimeout(() => {
-                        this.callbacks.delete(messageId);
+                // Store callback if provided
+                if (callback) {
+                    const timeoutDuration = 30000; // 30 second timeout
+                    const timeout = setTimeout(() => {
+                        this.callbacks.delete(message.id);
                         callback({ error: 'Request timeout' });
-                    }, this.config.timeout)
-                });
-            }
+                    }, timeoutDuration);
 
-            // Send or queue message
-            if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-                try {
-                    this.ws.send(JSON.stringify(message));
-                } catch (error) {
-                    console.error('Failed to send WebSocket message:', error);
-                    if (!skipQueue) {
-                        this.queueMessage(type, data, callback);
-                    }
+                    this.callbacks.set(message.id, {
+                        callback: callback,
+                        timeout: timeout
+                    });
                 }
-            } else if (!skipQueue) {
-                this.queueMessage(type, data, callback);
+
+                this.ws.send(JSON.stringify(message));
+            } catch (error) {
+                console.error('Failed to send message:', error);
+                if (callback) {
+                    callback({ error: 'Send failed: ' + error.message });
+                }
             }
-
-            return messageId;
-        } catch (error) {
-            console.error('Error in send method:', error);
-            if (callback) {
-                callback({ error: error.message });
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Queue message for later sending
-     */
-    queueMessage(type, data, callback) {
-        const existingMsg = this.messageQueue.find(m => m.type === type && m.messageId);
-
-        if (existingMsg) {
-            existingMsg.retries = (existingMsg.retries || 0) + 1;
         } else {
+            // Queue message if not connected
             this.messageQueue.push({
                 type,
                 data,
@@ -262,14 +236,14 @@ class WebSocketClient {
                 retries: 0,
                 timestamp: Date.now()
             });
-        }
 
-        // Limit queue size
-        if (this.messageQueue.length > 100) {
-            const dropped = this.messageQueue.shift();
-            console.log('Message queue overflow, dropping oldest message:', dropped.type);
-            if (dropped.callback) {
-                dropped.callback({ error: 'Message queue overflow' });
+            // Limit queue size
+            if (this.messageQueue.length > 100) {
+                const dropped = this.messageQueue.shift();
+                console.log('Message queue overflow, dropping oldest message:', dropped.type);
+                if (dropped.callback) {
+                    dropped.callback({ error: 'Message queue overflow' });
+                }
             }
         }
     }
@@ -335,12 +309,14 @@ class WebSocketClient {
      */
     handleAIResponse(data) {
         try {
-            chrome.runtime.sendMessage({
-                action: 'aiResponse',
-                data: data
-            }).catch(error => {
-                console.log('Could not send AI response to extension:', error);
-            });
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.runtime.sendMessage({
+                    action: 'aiResponse',
+                    data: data
+                }).catch(error => {
+                    console.log('Could not send AI response to extension:', error);
+                });
+            }
         } catch (error) {
             console.error('Error handling AI response:', error);
         }
@@ -351,13 +327,15 @@ class WebSocketClient {
      */
     handleVoiceTranscription(data) {
         try {
-            chrome.runtime.sendMessage({
-                action: 'voiceTranscription',
-                text: data.text,
-                confidence: data.confidence
-            }).catch(error => {
-                console.log('Could not send voice transcription:', error);
-            });
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.runtime.sendMessage({
+                    action: 'voiceTranscription',
+                    text: data.text,
+                    confidence: data.confidence
+                }).catch(error => {
+                    console.log('Could not send voice transcription:', error);
+                });
+            }
         } catch (error) {
             console.error('Error handling voice transcription:', error);
         }
@@ -368,11 +346,13 @@ class WebSocketClient {
      */
     handleSystemInfo(data) {
         try {
-            chrome.storage.local.set({
-                systemInfo: data
-            }).catch(error => {
-                console.error('Could not save system info:', error);
-            });
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.set({
+                    systemInfo: data
+                }).catch(error => {
+                    console.error('Could not save system info:', error);
+                });
+            }
         } catch (error) {
             console.error('Error handling system info:', error);
         }
@@ -383,13 +363,15 @@ class WebSocketClient {
      */
     handleFileOperation(data) {
         try {
-            chrome.runtime.sendMessage({
-                action: 'fileOperationComplete',
-                operation: data.operation,
-                result: data.result
-            }).catch(error => {
-                console.log('Could not send file operation result:', error);
-            });
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.runtime.sendMessage({
+                    action: 'fileOperationComplete',
+                    operation: data.operation,
+                    result: data.result
+                }).catch(error => {
+                    console.log('Could not send file operation result:', error);
+                });
+            }
         } catch (error) {
             console.error('Error handling file operation:', error);
         }
@@ -400,7 +382,7 @@ class WebSocketClient {
      */
     handleScreenshotResult(data) {
         try {
-            if (data.success && data.dataUrl) {
+            if (data.success && data.dataUrl && typeof chrome !== 'undefined' && chrome.downloads) {
                 chrome.downloads.download({
                     url: data.dataUrl,
                     filename: `screenshot_${Date.now()}.png`
@@ -420,14 +402,16 @@ class WebSocketClient {
      */
     showNotification(data) {
         try {
-            chrome.notifications.create({
-                type: 'basic',
-                iconUrl: chrome.runtime.getURL('images/icon-128.png'),
-                title: data.title || 'n8n AI Assistant',
-                message: data.message || 'Notification'
-            }).catch(error => {
-                console.error('Could not create notification:', error);
-            });
+            if (typeof chrome !== 'undefined' && chrome.notifications) {
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: chrome.runtime.getURL('images/icon-128.png'),
+                    title: data.title || 'n8n AI Assistant',
+                    message: data.message || 'Notification'
+                }).catch(error => {
+                    console.error('Could not create notification:', error);
+                });
+            }
         } catch (error) {
             console.error('Error showing notification:', error);
         }
@@ -445,18 +429,22 @@ class WebSocketClient {
             };
 
             // Notify background script
-            chrome.runtime.sendMessage(statusData).catch(() => {
-                // Extension might not be ready
-            });
-
-            // Update all tabs
-            chrome.tabs.query({}, (tabs) => {
-                tabs.forEach(tab => {
-                    chrome.tabs.sendMessage(tab.id, statusData).catch(() => {
-                        // Tab might not have content script
-                    });
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.runtime.sendMessage(statusData).catch(() => {
+                    // Extension might not be ready
                 });
-            });
+
+                // Update all tabs
+                if (chrome.tabs) {
+                    chrome.tabs.query({}, (tabs) => {
+                        tabs.forEach(tab => {
+                            chrome.tabs.sendMessage(tab.id, statusData).catch(() => {
+                                // Tab might not have content script
+                            });
+                        });
+                    });
+                }
+            }
         } catch (error) {
             console.log('Error notifying connection status:', error);
         }
