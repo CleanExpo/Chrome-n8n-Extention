@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n Professional Agent - Settings</title>
+    <link rel="stylesheet" href="options-enhanced.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span style="font-size: 28px;">🤖</span>
+                    <h1>n8n Assistant</h1>
+                </div>
+                <div class="sidebar-subtitle">Configuration Center</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#general" class="nav-item active" data-section="general">
+                    <span class="nav-icon">⚙️</span>
+                    <span>General Settings</span>
+                </a>
+                <a href="#api-keys" class="nav-item" data-section="api-keys">
+                    <span class="nav-icon">🔑</span>
+                    <span>API Keys</span>
+                </a>
+                <a href="#connections" class="nav-item" data-section="connections">
+                    <span class="nav-icon">🔗</span>
+                    <span>Connections</span>
+                </a>
+                <a href="#appearance" class="nav-item" data-section="appearance">
+                    <span class="nav-icon">🎨</span>
+                    <span>Appearance</span>
+                </a>
+                <a href="#advanced" class="nav-item" data-section="advanced">
+                    <span class="nav-icon">🔧</span>
+                    <span>Advanced</span>
+                </a>
+                <a href="#about" class="nav-item" data-section="about">
+                    <span class="nav-icon">ℹ️</span>
+                    <span>About</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Mobile menu toggle -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">Settings</h1>
+                <p class="page-description">Configure your n8n AI Assistant extension</p>
+            </div>
+
+            <!-- General Settings Section -->
+            <section id="general-section" class="settings-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="icon">⚙️</span>
+                        <h2>General Settings</h2>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Assistant Name</label>
+                    <input type="text" class="form-control" id="assistantName" placeholder="n8n AI Assistant">
+                    <div class="form-help">Customize the name displayed in the chat interface</div>
+                </div>
+
+                <div class="toggle-switch">
+                    <div class="toggle-info">
+                        <div class="toggle-title">Enable Assistant</div>
+                        <div class="toggle-description">Activate the AI assistant on all websites</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="enableAssistant" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-switch">
+                    <div class="toggle-info">
+                        <div class="toggle-title">Auto-start Chat</div>
+                        <div class="toggle-description">Automatically open chat window when clicking the widget</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoStartChat">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Default AI Model</label>
+                    <select class="form-control" id="defaultModel">
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fast)</option>
+                        <option value="gpt-4">GPT-4 (Advanced)</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo (Balanced)</option>
+                    </select>
+                    <div class="form-help">Select the AI model for conversations</div>
+                </div>
+            </section>
+
+            <!-- API Keys Section -->
+            <section id="api-keys-section" class="settings-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="icon">🔑</span>
+                        <h2>API Keys</h2>
+                    </div>
+                    <span class="section-badge">Secure</span>
+                </div>
+
+                <div class="alert alert-info">
+                    <span>🔒</span>
+                    <span>Your API keys are stored securely in Chrome's encrypted storage</span>
+                </div>
+
+                <!-- OpenAI API Key -->
+                <div class="api-key-card">
+                    <div class="api-key-header">
+                        <div class="api-key-title">OpenAI API Key</div>
+                        <div class="api-key-status not-configured" id="openaiStatus">
+                            <span class="status-dot"></span>
+                            <span>Not Configured</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="openaiKey" placeholder="sk-...">
+                        <button class="btn btn-primary" id="testOpenaiBtn">Test Connection</button>
+                    </div>
+                    <div id="openaiTestResult"></div>
+                </div>
+
+                <!-- n8n API Key -->
+                <div class="api-key-card">
+                    <div class="api-key-header">
+                        <div class="api-key-title">n8n API Key</div>
+                        <div class="api-key-status not-configured" id="n8nApiStatus">
+                            <span class="status-dot"></span>
+                            <span>Optional</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="n8nApiKey" placeholder="Your n8n API key">
+                        <button class="btn btn-secondary" id="testN8nApiBtn">Test</button>
+                    </div>
+                    <div id="n8nApiTestResult"></div>
+                </div>
+
+                <!-- Context7 API Key -->
+                <div class="api-key-card">
+                    <div class="api-key-header">
+                        <div class="api-key-title">Context7 API Key</div>
+                        <div class="api-key-status not-configured" id="context7Status">
+                            <span class="status-dot"></span>
+                            <span>Optional</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="context7ApiKey" placeholder="Get from context7.com/dashboard">
+                        <button class="btn btn-secondary" id="testContext7Btn">Test</button>
+                    </div>
+                    <div id="context7TestResult"></div>
+                    <div class="form-help">Get up-to-date documentation for any library. <a href="https://context7.com/dashboard" target="_blank">Get your API key</a></div>
+                </div>
+            </section>
+
+            <!-- Connections Section -->
+            <section id="connections-section" class="settings-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="icon">🔗</span>
+                        <h2>Connections</h2>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">n8n Webhook URL</label>
+                    <input type="url" class="form-control" id="n8nWebhookUrl" placeholder="https://your-n8n-instance.com/webhook/...">
+                    <div class="form-help">Enter your n8n webhook URL for workflow triggers</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Integration Server URL</label>
+                    <input type="url" class="form-control" id="integrationServer" placeholder="http://localhost:3000">
+                    <div class="form-help">URL of your integration server (if running locally)</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Custom Endpoint</label>
+                    <input type="url" class="form-control" id="customEndpoint" placeholder="https://api.example.com">
+                    <div class="form-help">Optional custom API endpoint</div>
+                </div>
+
+                <button class="btn btn-primary" id="testAllConnections">
+                    <span>🔍</span>
+                    Test All Connections
+                </button>
+            </section>
+
+            <!-- Appearance Section -->
+            <section id="appearance-section" class="settings-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="icon">🎨</span>
+                        <h2>Appearance</h2>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Theme</label>
+                    <select class="form-control" id="theme">
+                        <option value="auto">Auto (Follow System)</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Widget Position</label>
+                    <select class="form-control" id="widgetPosition">
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="top-left">Top Left</option>
+                        <option value="sidebar">Sidebar Dock</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Widget Size</label>
+                    <select class="form-control" id="widgetSize">
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+
+                <div class="toggle-switch">
+                    <div class="toggle-info">
+                        <div class="toggle-title">Show Animations</div>
+                        <div class="toggle-description">Enable smooth animations and transitions</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="enableAnimations" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-switch">
+                    <div class="toggle-info">
+                        <div class="toggle-title">Compact Mode</div>
+                        <div class="toggle-description">Use a more compact interface design</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="compactMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Advanced Section -->
+            <section id="advanced-section" class="settings-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="icon">🔧</span>
+                        <h2>Advanced</h2>
+                    </div>
+                    <span class="section-badge">Developer</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">System Prompt</label>
+                    <textarea class="form-control" id="systemPrompt" rows="4" placeholder="You are a helpful AI assistant..."></textarea>
+                    <div class="form-help">Customize the AI's behavior with a system prompt</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Max Tokens</label>
+                    <input type="number" class="form-control" id="maxTokens" placeholder="2000" min="100" max="4000">
+                    <div class="form-help">Maximum tokens for AI responses</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Temperature</label>
+                    <input type="range" class="form-control" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                    <div class="form-help">Control randomness in responses (0 = focused, 2 = creative)</div>
+                </div>
+
+                <div class="toggle-switch">
+                    <div class="toggle-info">
+                        <div class="toggle-title">Debug Mode</div>
+                        <div class="toggle-description">Show detailed logs in browser console</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="debugMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="exportSettings">
+                        <span>📤</span>
+                        Export Settings
+                    </button>
+                    <button class="btn btn-secondary" id="importSettings">
+                        <span>📥</span>
+                        Import Settings
+                    </button>
+                    <button class="btn btn-danger" id="resetSettings">
+                        <span>🔄</span>
+                        Reset All Settings
+                    </button>
+                </div>
+            </section>
+
+            <!-- About Section -->
+            <section id="about-section" class="settings-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="icon">ℹ️</span>
+                        <h2>About</h2>
+                    </div>
+                </div>
+
+                <div class="about-info">
+                    <h3>n8n Professional Agent</h3>
+                    <p>Version: 1.0.0</p>
+                    <p>An intelligent Chrome extension powered by AI to enhance your browsing experience with workflow automation.</p>
+
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>✅ AI-powered chat assistant</li>
+                        <li>✅ Direct OpenAI integration</li>
+                        <li>✅ n8n workflow automation</li>
+                        <li>✅ Modern, responsive UI</li>
+                        <li>✅ Dark mode support</li>
+                        <li>✅ Secure API key storage</li>
+                    </ul>
+
+                    <h4>Resources:</h4>
+                    <div class="btn-group">
+                        <a href="https://n8n.io" target="_blank" class="btn btn-secondary">
+                            <span>🌐</span>
+                            n8n Website
+                        </a>
+                        <a href="https://github.com/n8n-io/n8n" target="_blank" class="btn btn-secondary">
+                            <span>📦</span>
+                            GitHub
+                        </a>
+                        <a href="#" id="viewDocs" class="btn btn-secondary">
+                            <span>📚</span>
+                            Documentation
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Save button -->
+            <div class="btn-group" style="margin-top: 32px;">
+                <button class="btn btn-primary" id="saveBtn">
+                    <span>💾</span>
+                    Save Settings
+                </button>
+                <button class="btn btn-secondary" id="cancelBtn">
+                    Cancel
+                </button>
+            </div>
+
+            <!-- Success/Error messages -->
+            <div id="messageContainer"></div>
+        </main>
+    </div>
+
+    <script src="options-enhanced.js"></script>
+</body>
+</html>

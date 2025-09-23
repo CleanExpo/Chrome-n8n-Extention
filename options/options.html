@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Options</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>n8n AI Assistant Settings</h1>
+            <p class="subtitle">Configure your assistant and API connections</p>
+        </header>
+
+        <main>
+            <form id="options-form">
+                <!-- API Configuration -->
+                <section class="settings-section">
+                    <h2>API Configuration</h2>
+                    <div class="setting-item">
+                        <label for="n8n-url" class="block-label">n8n Webhook URL</label>
+                        <input type="text" id="n8n-url" name="n8nUrl" placeholder="http://localhost:5678">
+                        <p class="setting-description">Your n8n instance webhook URL</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="openai-key" class="block-label">OpenAI API Key</label>
+                        <input type="password" id="openai-key" name="openaiKey" placeholder="sk-...">
+                        <p class="setting-description">Your OpenAI API key for AI features</p>
+                        <button type="button" id="test-openai-btn" class="btn btn-secondary" style="margin-top: 8px;" onclick="console.log('Button clicked inline'); alert('Testing OpenAI key...');">
+                            Test OpenAI Connection
+                        </button>
+                        <div id="openai-test-result" style="margin-top: 8px; display: none;"></div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="google-key" class="block-label">Google API Key</label>
+                        <input type="password" id="google-key" name="googleApiKey" placeholder="AIza...">
+                        <p class="setting-description">Your Google API key for Google services integration</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="integration-server" class="block-label">Integration Server URL</label>
+                        <input type="text" id="integration-server" name="integrationServer" placeholder="http://localhost:3000">
+                        <p class="setting-description">URL of your local integration server</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="websocket-port" class="block-label">WebSocket Port</label>
+                        <input type="number" id="websocket-port" name="websocketPort" placeholder="8766" min="1" max="65535">
+                        <p class="setting-description">Port for WebSocket connections</p>
+                    </div>
+                </section>
+
+                <!-- General Settings -->
+                <section class="settings-section">
+                    <h2>General Settings</h2>
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <label for="auto-analyze">
+                                <input type="checkbox" id="auto-analyze" name="autoAnalyze">
+                                <span>Auto-analyze pages</span>
+                            </label>
+                            <p class="setting-description">Automatically analyze pages when you visit them</p>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <label for="show-notifications">
+                                <input type="checkbox" id="show-notifications" name="showNotifications">
+                                <span>Show notifications</span>
+                            </label>
+                            <p class="setting-description">Display browser notifications for important events</p>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="analysis-delay" class="block-label">Analysis Delay (seconds)</label>
+                        <input type="number" id="analysis-delay" name="analysisDelay" min="0" max="10" step="1">
+                        <p class="setting-description">Wait time before analyzing a page (0-10 seconds)</p>
+                    </div>
+                </section>
+
+                <!-- Appearance Settings -->
+                <section class="settings-section">
+                    <h2>Appearance</h2>
+                    <div class="setting-item">
+                        <label for="theme" class="block-label">Theme</label>
+                        <select id="theme" name="theme">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="auto">Auto (System)</option>
+                        </select>
+                        <p class="setting-description">Choose your preferred color theme</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="badge-color" class="block-label">Badge Color</label>
+                        <input type="color" id="badge-color" name="badgeColor" value="#667eea">
+                        <p class="setting-description">Color for the extension badge</p>
+                    </div>
+                </section>
+
+                <!-- Advanced Settings -->
+                <section class="settings-section">
+                    <h2>Advanced</h2>
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <label for="debug-mode">
+                                <input type="checkbox" id="debug-mode" name="debugMode">
+                                <span>Debug mode</span>
+                            </label>
+                            <p class="setting-description">Enable console logging for debugging</p>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="max-history" class="block-label">Maximum History Items</label>
+                        <input type="number" id="max-history" name="maxHistory" min="10" max="1000" step="10">
+                        <p class="setting-description">Number of history items to keep (10-1000)</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="excluded-sites" class="block-label">Excluded Sites</label>
+                        <textarea id="excluded-sites" name="excludedSites" rows="4"
+                                  placeholder="Enter URLs to exclude, one per line..."></textarea>
+                        <p class="setting-description">Sites where the extension should not run</p>
+                    </div>
+                </section>
+
+                <!-- Data Management -->
+                <section class="settings-section">
+                    <h2>Data Management</h2>
+                    <div class="button-group">
+                        <button type="button" id="export-btn" class="btn btn-secondary">
+                            Export Settings
+                        </button>
+                        <button type="button" id="import-btn" class="btn btn-secondary">
+                            Import Settings
+                        </button>
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="reset-btn" class="btn btn-danger">
+                            Reset to Defaults
+                        </button>
+                        <button type="button" id="clear-data-btn" class="btn btn-danger">
+                            Clear All Data
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Save Button -->
+                <div class="form-actions">
+                    <button type="submit" id="save-settings" class="btn btn-primary">Save Settings</button>
+                </div>
+
+                <!-- Status Message -->
+                <div id="status" class="status hidden"></div>
+            </form>
+        </main>
+
+        <footer>
+            <p>n8n AI Assistant Version: 1.0.0</p>
+            <p>Professional Automation Agent for n8n</p>
+        </footer>
+    </div>
+    <script src="options.js"></script>
+</body>
+</html>

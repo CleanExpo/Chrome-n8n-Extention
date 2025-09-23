@@ -1,0 +1,60 @@
+{
+  "name": "n8n-desktop-assistant",
+  "version": "1.0.0",
+  "description": "Desktop companion app for n8n AI Assistant Chrome Extension",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "dist": "electron-builder --publish=never"
+  },
+  "keywords": [
+    "n8n",
+    "ai",
+    "assistant",
+    "automation",
+    "electron"
+  ],
+  "author": "n8n",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.0",
+    "keytar": "^7.9.0",
+    "screenshot-desktop": "^1.12.7",
+    "node-record-lpcm16": "^1.0.1",
+    "@google-cloud/speech": "^6.0.0",
+    "openai": "^4.0.0",
+    "elevenlabs": "^0.1.0",
+    "dotenv": "^16.3.1",
+    "electron-store": "^8.1.0",
+    "systray": "^1.0.5",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "axios": "^1.5.0"
+  },
+  "build": {
+    "appId": "com.n8n.desktop-assistant",
+    "productName": "n8n Desktop Assistant",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
+  }
+}

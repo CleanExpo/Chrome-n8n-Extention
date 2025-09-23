@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+    <title>n8n Desktop Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-section">
+                <div class="logo">n8n</div>
+                <h1>Desktop Assistant</h1>
+            </div>
+            <div class="status-section">
+                <div class="status-indicator" id="ws-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Checking...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="app-nav">
+            <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+            <button class="nav-btn" data-page="connections">Connections</button>
+            <button class="nav-btn" data-page="settings">Settings</button>
+            <button class="nav-btn" data-page="logs">Logs</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="app-content">
+            <!-- Dashboard Page -->
+            <div class="page active" id="dashboard-page">
+                <h2>Dashboard</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="connected-clients">0</div>
+                        <div class="stat-label">Connected Clients</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="messages-processed">0</div>
+                        <div class="stat-label">Messages Processed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="ai-requests">0</div>
+                        <div class="stat-label">AI Requests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="uptime">0h 0m</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" id="test-connection">Test Connection</button>
+                        <button class="action-btn" id="capture-screen">Capture Screen</button>
+                        <button class="action-btn" id="test-ai">Test AI</button>
+                        <button class="action-btn" id="open-extension">Open Extension</button>
+                    </div>
+                </div>
+
+                <div class="activity-log">
+                    <h3>Recent Activity</h3>
+                    <div class="log-container" id="activity-log"></div>
+                </div>
+            </div>
+
+            <!-- Connections Page -->
+            <div class="page" id="connections-page">
+                <h2>Connections</h2>
+
+                <div class="connection-status">
+                    <h3>WebSocket Server</h3>
+                    <div class="connection-info">
+                        <div class="info-row">
+                            <span class="label">Status:</span>
+                            <span class="value" id="ws-server-status">Not Running</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Port:</span>
+                            <span class="value" id="ws-port">8765</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Clients:</span>
+                            <span class="value" id="ws-clients">0</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="toggle-server">Start Server</button>
+                </div>
+
+                <div class="connected-clients">
+                    <h3>Connected Extensions</h3>
+                    <div class="clients-list" id="clients-list">
+                        <p class="empty-state">No extensions connected</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page" id="settings-page">
+                <h2>Settings</h2>
+
+                <div class="settings-section">
+                    <h3>Server Configuration</h3>
+                    <div class="setting-group">
+                        <label for="port-input">WebSocket Port</label>
+                        <input type="number" id="port-input" value="8765" min="1024" max="65535">
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="minimize-tray">
+                            Minimize to system tray
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="launch-startup">
+                            Launch at system startup
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>API Keys</h3>
+                    <div class="setting-group">
+                        <label for="openai-key">OpenAI API Key</label>
+                        <input type="password" id="openai-key" placeholder="sk-...">
+                    </div>
+                    <div class="setting-group">
+                        <label for="elevenlabs-key">ElevenLabs API Key</label>
+                        <input type="password" id="elevenlabs-key" placeholder="Enter API key">
+                    </div>
+                    <div class="setting-group">
+                        <label for="google-key">Google Cloud API Key</label>
+                        <input type="password" id="google-key" placeholder="Enter API key">
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button class="btn-primary" id="save-settings">Save Settings</button>
+                    <button class="btn-secondary" id="reset-settings">Reset to Default</button>
+                </div>
+            </div>
+
+            <!-- Logs Page -->
+            <div class="page" id="logs-page">
+                <h2>System Logs</h2>
+
+                <div class="log-controls">
+                    <select id="log-level">
+                        <option value="all">All</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                    </select>
+                    <button class="btn-secondary" id="clear-logs">Clear Logs</button>
+                    <button class="btn-secondary" id="export-logs">Export Logs</button>
+                </div>
+
+                <div class="logs-container" id="system-logs"></div>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="app-footer">
+            <span id="footer-status">Ready</span>
+            <span id="footer-time"></span>
+        </footer>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

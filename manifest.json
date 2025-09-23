@@ -1,0 +1,79 @@
+{
+  "manifest_version": 3,
+  "name": "n8n Professional Agent",
+  "version": "1.0.0",
+  "description": "Professional workflow automation agent for n8n - Enhance your browsing with powerful automation capabilities",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "identity",
+    "identity.email",
+    "contextMenus",
+    "notifications",
+    "clipboardRead",
+    "clipboardWrite",
+    "webNavigation",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "images/*",
+        "floating-widget-enhanced.js",
+        "floating-widget-enhanced.css",
+        "popup/popup-chat.html",
+        "popup/popup-enhanced.html",
+        "popup/popup-enhanced.css",
+        "popup/popup-enhanced.js",
+        "n8n-docs/*.md",
+        "chrome-extension-docs/*.md",
+        "opal-ai-docs/*.md",
+        "opal-docs-integration.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup/popup-enhanced.html",
+    "default_icon": {
+      "16": "images/icon-16.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    },
+    "default_title": "n8n AI Assistant - Click to open"
+  },
+
+  "options_page": "options/options-enhanced.html",
+
+  "options_ui": {
+    "page": "options/options-enhanced.html",
+    "open_in_tab": true
+  },
+
+  "icons": {
+    "16": "images/icon-16.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  }
+}

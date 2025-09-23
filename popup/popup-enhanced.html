@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=420, initial-scale=1.0">
+    <title>n8n Professional Agent</title>
+    <link rel="stylesheet" href="popup-enhanced.css">
+    <style>
+        /* Critical inline styles to ensure proper popup sizing */
+        html, body {
+            width: 420px !important;
+            height: 650px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+    </style>
+    <script src="popup-init.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with gradient background -->
+        <header>
+            <h1>n8n AI Assistant</h1>
+            <div class="subtitle">Your intelligent browsing companion</div>
+        </header>
+
+        <!-- Main content area -->
+        <main>
+            <!-- Status Section -->
+            <section class="status-section">
+                <h2>📊 Status</h2>
+                <div class="status-indicator">
+                    <span class="status-dot active"></span>
+                    <span id="statusText">AI Assistant Active</span>
+                </div>
+                <div class="toggle-container">
+                    <span class="toggle-label">Enable Assistant</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleAssistant" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Quick Actions Section -->
+            <section class="actions-section">
+                <h2>⚡ Quick Actions</h2>
+                <button class="btn btn-primary" id="openChat">
+                    <span>💬</span>
+                    Open Chat Window
+                </button>
+                <button class="btn btn-secondary" id="captureScreen">
+                    <span>📸</span>
+                    Capture Screenshot
+                </button>
+                <button class="btn btn-secondary" id="extractContent">
+                    <span>📄</span>
+                    Extract Page Content
+                </button>
+            </section>
+
+            <!-- Connections Section -->
+            <section class="connections-section">
+                <h2>🔗 Connections</h2>
+                <div class="connection-list">
+                    <div class="connection-item">
+                        <span class="connection-dot" id="openaiStatus"></span>
+                        <span>OpenAI API</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="n8nStatus"></span>
+                        <span>n8n Workflow</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="serverStatus"></span>
+                        <span>Integration Server</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section class="settings-section">
+                <h2>⚙️ Configuration</h2>
+                <button class="btn btn-secondary" id="openSettings">
+                    <span>🔧</span>
+                    Settings / API Keys
+                </button>
+                <button class="btn btn-secondary" id="openDocs">
+                    <span>📚</span>
+                    Documentation
+                </button>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <h2>📈 Usage Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="messagesCount">0</span>
+                        <span class="stat-label">Messages</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="automationsCount">0</span>
+                        <span class="stat-label">Automations</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Message Section -->
+            <section class="message-section">
+                <div id="messageBox" class="message hidden">
+                    <span id="messageIcon"></span>
+                    <span id="messageText"></span>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <a href="https://n8n.io" target="_blank">n8n.io</a>
+            <span class="separator">•</span>
+            <a href="#" id="helpLink">Help</a>
+            <span class="separator">•</span>
+            <a href="#" id="feedbackLink">Feedback</a>
+        </footer>
+    </div>
+
+    <script src="popup-enhanced.js"></script>
+</body>
+</html>

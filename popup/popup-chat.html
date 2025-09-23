@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n AI Assistant</title>
+    <link rel="stylesheet" href="popup-chat.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Connection Status -->
+        <header class="header">
+            <div class="header-content">
+                <img src="../images/icon-48.png" alt="n8n" class="logo">
+                <div class="header-info">
+                    <h1>n8n AI Assistant</h1>
+                    <div class="connection-status">
+                        <span class="status-dot" id="desktop-status"></span>
+                        <span class="status-text" id="status-text">Checking connection...</span>
+                    </div>
+                </div>
+            </div>
+            <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+        </header>
+
+        <!-- Chat Messages Area -->
+        <div class="chat-container" id="chat-container">
+            <div class="welcome-message">
+                <img src="../images/icon-128.png" alt="n8n" class="welcome-logo">
+                <h2>Welcome to n8n AI Assistant</h2>
+                <p>I can help you with:</p>
+                <ul class="features-list">
+                    <li>📝 Extract and summarize web content</li>
+                    <li>📧 Process emails and documents</li>
+                    <li>🎬 Get YouTube transcripts</li>
+                    <li>📷 Capture and analyze screenshots</li>
+                    <li>🤖 Automate repetitive tasks</li>
+                    <li>🔊 Voice commands (with desktop app)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-btn" data-action="capture-tab">
+                <span class="icon">📷</span>
+                <span class="label">Capture Tab</span>
+            </button>
+            <button class="quick-btn" data-action="extract-page">
+                <span class="icon">📝</span>
+                <span class="label">Extract Page</span>
+            </button>
+            <button class="quick-btn" data-action="summarize">
+                <span class="icon">📊</span>
+                <span class="label">Summarize</span>
+            </button>
+            <button class="quick-btn" data-action="translate">
+                <span class="icon">🌐</span>
+                <span class="label">Translate</span>
+            </button>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <div class="input-actions">
+                <button class="action-btn" id="attach-btn" title="Attach file">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                </button>
+                <button class="action-btn" id="screenshot-btn" title="Take screenshot">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                </button>
+                <button class="action-btn" id="voice-btn" title="Voice input">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="input-wrapper">
+                <textarea
+                    id="message-input"
+                    class="message-input"
+                    placeholder="Type your message or paste content..."
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                        <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <input type="file" id="file-input" style="display: none;" accept="image/*,.pdf,.txt,.doc,.docx,.csv,.json">
+        </div>
+
+        <!-- Recording Indicator -->
+        <div class="recording-indicator" id="recording-indicator" style="display: none;">
+            <div class="recording-dot"></div>
+            <span>Recording...</span>
+            <button class="stop-recording">Stop</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" id="close-settings">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <input type="checkbox" id="auto-detect-forms">
+                        <span>Auto-detect forms</span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <input type="checkbox" id="enable-voice">
+                        <span>Enable voice commands</span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <input type="checkbox" id="save-history">
+                        <span>Save chat history</span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Desktop App Port</label>
+                    <input type="number" id="ws-port" value="8765" min="1024" max="65535">
+                </div>
+                <div class="setting-group">
+                    <button class="btn btn-primary" id="connect-google">Connect Google Account</button>
+                </div>
+                <div class="setting-group">
+                    <button class="btn btn-secondary" id="clear-history">Clear Chat History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup-chat.js"></script>
+</body>
+</html>

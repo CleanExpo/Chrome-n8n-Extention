@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Popup</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>n8n AI Assistant</h1>
+            <p class="subtitle">Chrome Extension v1.0</p>
+        </header>
+
+        <main>
+            <section class="status-section">
+                <h2>Assistant Status</h2>
+                <div class="status-indicator">
+                    <span class="status-dot" id="main-status-dot"></span>
+                    <span id="status-text">Active</span>
+                </div>
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="assistant-toggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">Enable Assistant</span>
+                </div>
+            </section>
+
+            <section class="connections-section">
+                <h2>API Connections</h2>
+                <div class="connection-list">
+                    <div class="connection-item">
+                        <span class="connection-dot" id="n8n-status"></span>
+                        <span>n8n Server</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="ws-status"></span>
+                        <span>WebSocket</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="google-status"></span>
+                        <span>Google API</span>
+                    </div>
+                    <div class="connection-item">
+                        <span class="connection-dot" id="openai-status"></span>
+                        <span>OpenAI</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="actions-section">
+                <h2>Quick Actions</h2>
+                <button id="open-assistant-btn" class="btn btn-primary">
+                    Open Assistant
+                </button>
+                <button id="settings-btn" class="btn btn-primary">
+                    ⚙️ Settings / API Keys
+                </button>
+                <button id="analyze-btn" class="btn btn-secondary">
+                    Analyze Current Page
+                </button>
+                <button id="refresh-connections-btn" class="btn btn-secondary">
+                    Refresh Connections
+                </button>
+            </section>
+
+            <section class="stats-section">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="page-count">0</span>
+                        <span class="stat-label">Pages Analyzed</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="action-count">0</span>
+                        <span class="stat-label">Actions Taken</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="message-section">
+                <div id="message" class="message hidden"></div>
+            </section>
+        </main>
+
+        <footer>
+            <a href="#" id="options-link">Settings</a>
+            <span class="separator">•</span>
+            <a href="#" id="help-link">Help</a>
+        </footer>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# MCP Servers (can be installed separately)
+context7-mcp/
+github-mcp-server/
+playwright-mcp/
+
+# Build outputs
+*.crx
+*.pem
+*.zip
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.backup
+
+# Test files
+test-*.html
+.playwright-mcp/
+
+# Private/sensitive files
+.env
+.env.local
+secrets.json
+
+# Python files (if not needed)
+*.py
+__pycache__/
+*.pyc
+
+# MCP config (user-specific)
+.mcp/
+mcp-config.json
+claude_mcp_config.json
+node_modules
