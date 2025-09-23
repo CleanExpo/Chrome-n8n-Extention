@@ -38,6 +38,27 @@ function injectFloatingWidget() {
     (document.head || document.documentElement).appendChild(script);
 }
 
+// Inject SEO content helper script
+function injectSEOHelper() {
+    // Check if already injected
+    if (document.querySelector('[data-seo-helper]')) {
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('seo-content-helper.js');
+    script.setAttribute('data-seo-helper', 'true');
+    script.onload = function() {
+        console.log('SEO content helper loaded successfully');
+        this.remove();
+    };
+    script.onerror = function(error) {
+        console.error('Failed to load SEO content helper:', error);
+        this.remove();
+    };
+    (document.head || document.documentElement).appendChild(script);
+}
+
 // Extension state
 let extensionEnabled = true;
 let settings = {};
@@ -60,6 +81,7 @@ let settings = {};
     // Inject floating widget if assistant is enabled
     if (assistantEnabled) {
         injectFloatingWidget();
+        injectSEOHelper();
     }
 
     // Set up mutation observer for dynamic content

@@ -48,20 +48,23 @@
         "n8n-docs/*.md",
         "chrome-extension-docs/*.md",
         "opal-ai-docs/*.md",
-        "opal-docs-integration.js"
+        "opal-docs-integration.js",
+        "seo-analysis.js",
+        "seo-integration.js",
+        "seo-content-helper.js"
       ],
       "matches": ["<all_urls>"]
     }
   ],
 
   "action": {
-    "default_popup": "popup/popup-fixed.html",
+    "default_popup": "popup/popup-futuristic.html",
     "default_icon": {
       "16": "images/icon-16.png",
       "48": "images/icon-48.png",
       "128": "images/icon-128.png"
     },
-    "default_title": "n8n AI Assistant - Click to open"
+    "default_title": "Google Extension AI - Holographic Dashboard"
   },
 
   "options_page": "options/options-enhanced.html",

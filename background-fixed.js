@@ -11,7 +11,9 @@ try {
         'context7-integration.js',
         'n8n-docs-integration.js',
         'chrome-docs-integration.js',
-        'opal-docs-integration.js'
+        'opal-docs-integration.js',
+        'seo-analysis.js',
+        'seo-integration.js'
     );
     console.log('All modules imported successfully');
 } catch (error) {
