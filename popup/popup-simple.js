@@ -19,12 +19,14 @@ class SimpleAIAssistant {
         this.settingsBtn = document.getElementById('settingsBtn');
         this.helpBtn = document.getElementById('helpBtn');
         this.statusElement = document.getElementById('status');
+        this.modelDropdown = document.getElementById('modelDropdown');
 
         // Setup event listeners
         this.setupEventListeners();
 
-        // Check connection status
+        // Check connection status and load current model
         this.checkConnectionStatus();
+        this.loadCurrentModel();
 
         // Load previous messages if any
         this.loadMessages();
@@ -52,6 +54,9 @@ class SimpleAIAssistant {
         this.clearBtn?.addEventListener('click', () => this.clearChat());
         this.settingsBtn?.addEventListener('click', () => this.openSettings());
         this.helpBtn?.addEventListener('click', () => this.showHelp());
+
+        // Model dropdown
+        this.modelDropdown?.addEventListener('change', (e) => this.switchModel(e.target.value));
     }
 
     async sendMessage() {
@@ -261,16 +266,73 @@ Just type your question or click a quick action button to get started.`,
     async checkConnectionStatus() {
         try {
             const response = await chrome.runtime.sendMessage({
-                action: 'getStats'
+                action: 'getStatus'
             });
 
             if (response?.apiStatus) {
-                const isConnected = response.apiStatus.openai || response.apiStatus.n8n;
+                const isConnected = response.apiStatus.openai || response.apiStatus.google || response.apiStatus.anthropic || response.apiStatus.n8n;
                 this.updateStatus(isConnected);
             }
         } catch (error) {
             this.updateStatus(false);
         }
+    }
+
+    async loadCurrentModel() {
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: 'getModels'
+            });
+
+            if (response?.success && response?.current) {
+                // Set the dropdown to current model
+                const modelId = response.current.model;
+                if (this.modelDropdown && modelId) {
+                    // Check if the model exists in the dropdown
+                    const option = Array.from(this.modelDropdown.options).find(opt => opt.value === modelId);
+                    if (option) {
+                        this.modelDropdown.value = modelId;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading current model:', error);
+        }
+    }
+
+    async switchModel(modelId) {
+        // Determine provider based on model ID
+        let provider = 'openai';
+        if (modelId.includes('gemini')) {
+            provider = 'google';
+        } else if (modelId.includes('claude')) {
+            provider = 'anthropic';
+        }
+
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: 'setModel',
+                provider: provider,
+                model: modelId
+            });
+
+            if (response?.success) {
+                // Show success indicator
+                this.showModelSwitchSuccess(modelId);
+            }
+        } catch (error) {
+            console.error('Error switching model:', error);
+        }
+    }
+
+    showModelSwitchSuccess(modelId) {
+        const modelName = this.modelDropdown.options[this.modelDropdown.selectedIndex].text;
+        // Temporarily show success message
+        const originalStatus = this.statusElement.innerHTML;
+        this.statusElement.innerHTML = `<span class="status-dot online"></span><span>✅ ${modelName}</span>`;
+        setTimeout(() => {
+            this.statusElement.innerHTML = originalStatus;
+        }, 2000);
     }
 
     updateStatus(isConnected) {

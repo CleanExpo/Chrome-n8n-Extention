@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extension Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .model-list {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Chrome Extension Verification</h1>
+
+    <div id="extensionStatus" class="status info">Checking extension...</div>
+
+    <h2>Quick Tests:</h2>
+    <button onclick="checkExtension()">Check Extension Status</button>
+    <button onclick="getModels()">Get Available Models</button>
+    <button onclick="getCurrentModel()">Get Current Model</button>
+    <button onclick="testMessage()">Send Test Message</button>
+
+    <h2>Extension Details:</h2>
+    <div id="details" class="model-list"></div>
+
+    <h2>Available Models:</h2>
+    <div id="models" class="model-list">Click "Get Available Models" to load</div>
+
+    <h2>Console Output:</h2>
+    <pre id="console"></pre>
+
+    <script>
+        function log(message, type = 'info') {
+            const consoleEl = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleEl.textContent += `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            console.log(message);
+        }
+
+        async function checkExtension() {
+            log('Checking extension status...');
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'getStatus'
+                });
+
+                log('Response received: ' + JSON.stringify(response, null, 2));
+
+                const statusEl = document.getElementById('extensionStatus');
+                const detailsEl = document.getElementById('details');
+
+                if (response) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Extension is loaded and responding!';
+
+                    detailsEl.innerHTML = `
+                        <strong>Connection Status:</strong> ${response.connected ? '✅ Connected' : '❌ Not Connected'}<br>
+                        <strong>Selected Model:</strong> ${response.selectedModel || 'Not set'}<br>
+                        <strong>Selected Provider:</strong> ${response.selectedProvider || 'Not set'}<br>
+                        <br>
+                        <strong>API Status:</strong><br>
+                        • OpenAI: ${response.apiStatus?.openai ? '✅ Configured' : '❌ Not Configured'}<br>
+                        • Google: ${response.apiStatus?.google ? '✅ Configured' : '❌ Not Configured'}<br>
+                        • Anthropic: ${response.apiStatus?.anthropic ? '✅ Configured' : '❌ Not Configured'}<br>
+                        • n8n: ${response.apiStatus?.n8n ? '✅ Configured' : '❌ Not Configured'}
+                    `;
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ No response from extension';
+                }
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+                document.getElementById('extensionStatus').className = 'status error';
+                document.getElementById('extensionStatus').textContent = '❌ Extension not found or not loaded';
+            }
+        }
+
+        async function getModels() {
+            log('Getting available models...');
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'getModels'
+                });
+
+                log('Models response: ' + JSON.stringify(response, null, 2));
+
+                if (response?.success && response?.models) {
+                    const modelsEl = document.getElementById('models');
+                    let html = '';
+
+                    // OpenAI Models
+                    if (response.models.openai) {
+                        html += '<h3>OpenAI Models:</h3><ul>';
+                        response.models.openai.forEach(model => {
+                            html += `<li><strong>${model.name}</strong> (${model.id}): ${model.description}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+
+                    // Google Models
+                    if (response.models.google) {
+                        html += '<h3>Google Gemini Models:</h3><ul>';
+                        response.models.google.forEach(model => {
+                            html += `<li><strong>${model.name}</strong> (${model.id}): ${model.description}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+
+                    // Anthropic Models
+                    if (response.models.anthropic) {
+                        html += '<h3>Anthropic Claude Models:</h3><ul>';
+                        response.models.anthropic.forEach(model => {
+                            html += `<li><strong>${model.name}</strong> (${model.id}): ${model.description}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+
+                    html += `<br><strong>Current Selection:</strong> ${response.current?.provider} - ${response.current?.model}`;
+
+                    modelsEl.innerHTML = html;
+                } else {
+                    document.getElementById('models').textContent = 'Failed to load models or no models available';
+                }
+            } catch (error) {
+                log('Error getting models: ' + error.message, 'error');
+                document.getElementById('models').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function getCurrentModel() {
+            log('Getting current model...');
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'getStatus'
+                });
+
+                if (response) {
+                    log(`Current model: ${response.selectedModel || 'Not set'}`);
+                    log(`Current provider: ${response.selectedProvider || 'Not set'}`);
+                    alert(`Current Model: ${response.selectedModel || 'Not set'}\nProvider: ${response.selectedProvider || 'Not set'}`);
+                }
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function testMessage() {
+            log('Sending test message...');
+            const message = prompt('Enter test message:', 'Hello! What model are you and what version?');
+
+            if (message) {
+                try {
+                    const response = await chrome.runtime.sendMessage({
+                        action: 'sendMessage',
+                        message: message,
+                        context: { test: true }
+                    });
+
+                    log('Response: ' + JSON.stringify(response, null, 2));
+
+                    if (response?.success && response?.reply) {
+                        alert('AI Response:\n\n' + response.reply);
+                    } else {
+                        alert('Error: ' + (response?.reply || 'No response'));
+                    }
+                } catch (error) {
+                    log('Error: ' + error.message, 'error');
+                    alert('Error: ' + error.message);
+                }
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            setTimeout(checkExtension, 500);
+        });
+    </script>
+</body>
+</html>

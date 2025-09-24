@@ -35,6 +35,10 @@
                     <span class="nav-icon">🎨</span>
                     <span>Appearance</span>
                 </a>
+                <a href="#models" class="nav-item" data-section="models">
+                    <span class="nav-icon">🧠</span>
+                    <span>AI Models</span>
+                </a>
                 <a href="#advanced" class="nav-item" data-section="advanced">
                     <span class="nav-icon">🔧</span>
                     <span>Advanced</span>
@@ -150,6 +154,40 @@
                         <button class="btn btn-secondary" id="testN8nApiBtn">Test</button>
                     </div>
                     <div id="n8nApiTestResult"></div>
+                </div>
+
+                <!-- Google API Key -->
+                <div class="api-key-card">
+                    <div class="api-key-header">
+                        <div class="api-key-title">Google Gemini API Key</div>
+                        <div class="api-key-status not-configured" id="googleStatus">
+                            <span class="status-dot"></span>
+                            <span>Not configured</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="googleApiKey" placeholder="Your Google AI Studio API key">
+                        <button class="btn btn-secondary" id="testGoogleBtn">Test</button>
+                    </div>
+                    <div id="googleTestResult"></div>
+                    <div class="form-help">For Gemini 2.0 Flash, Gemini 1.5 Pro models. <a href="https://makersuite.google.com/app/apikey" target="_blank">Get API key</a></div>
+                </div>
+
+                <!-- Anthropic API Key -->
+                <div class="api-key-card">
+                    <div class="api-key-header">
+                        <div class="api-key-title">Anthropic Claude API Key</div>
+                        <div class="api-key-status not-configured" id="anthropicStatus">
+                            <span class="status-dot"></span>
+                            <span>Not configured</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="anthropicKey" placeholder="Your Anthropic API key">
+                        <button class="btn btn-secondary" id="testAnthropicBtn">Test</button>
+                    </div>
+                    <div id="anthropicTestResult"></div>
+                    <div class="form-help">For Claude 3.5 Sonnet, Claude 3.5 Haiku models. <a href="https://console.anthropic.com/account/keys" target="_blank">Get API key</a></div>
                 </div>
 
                 <!-- Context7 API Key -->

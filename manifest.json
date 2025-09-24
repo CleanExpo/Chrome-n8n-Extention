@@ -36,7 +36,7 @@
   ],
 
   "background": {
-    "service_worker": "background-working.js"
+    "service_worker": "background-latest-models.js"
   },
 
   "content_scripts": [

@@ -45,6 +45,8 @@ function applySettingsToUI() {
 
     // API Keys
     setInputValue('openaiKey', settings.openaiKey || '');
+    setInputValue('googleApiKey', settings.googleApiKey || '');
+    setInputValue('anthropicKey', settings.anthropicKey || '');
     setInputValue('n8nApiKey', settings.n8nApiKey || '');
     setInputValue('context7ApiKey', settings.context7ApiKey || '');
 
@@ -128,6 +130,16 @@ function setupEventListeners() {
         testAllBtn.addEventListener('click', testAllConnections);
     }
 
+    const testGoogleBtn = document.getElementById('testGoogleBtn');
+    if (testGoogleBtn) {
+        testGoogleBtn.addEventListener('click', testGoogleConnection);
+    }
+
+    const testAnthropicBtn = document.getElementById('testAnthropicBtn');
+    if (testAnthropicBtn) {
+        testAnthropicBtn.addEventListener('click', testAnthropicConnection);
+    }
+
     const testContext7Btn = document.getElementById('testContext7Btn');
     if (testContext7Btn) {
         testContext7Btn.addEventListener('click', testContext7Connection);
@@ -196,6 +208,8 @@ async function saveSettings() {
 
             // API Keys
             openaiKey: document.getElementById('openaiKey')?.value || '',
+            googleApiKey: document.getElementById('googleApiKey')?.value || '',
+            anthropicKey: document.getElementById('anthropicKey')?.value || '',
             n8nApiKey: document.getElementById('n8nApiKey')?.value || '',
             context7ApiKey: document.getElementById('context7ApiKey')?.value || '',
 
@@ -371,6 +385,72 @@ async function testOpenAIConnection() {
         }
     } catch (error) {
         showTestResult(resultDiv, `Connection failed: ${error.message}`, 'error');
+        updateStatus(statusDiv, 'error', 'Error');
+    }
+}
+
+// Test Google API connection
+async function testGoogleConnection() {
+    const apiKey = document.getElementById('googleApiKey')?.value;
+    const resultDiv = document.getElementById('googleTestResult');
+    const statusDiv = document.getElementById('googleStatus');
+
+    if (!apiKey) {
+        showTestResult(resultDiv, 'Please enter an API key first', 'error');
+        updateStatus(statusDiv, 'not-configured', 'Not Configured');
+        return;
+    }
+
+    showTestResult(resultDiv, 'Testing connection...', 'info');
+
+    try {
+        // Test Google Gemini API
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+
+        if (response.ok) {
+            showTestResult(resultDiv, 'Connection successful! Google Gemini is ready.', 'success');
+            updateStatus(statusDiv, 'connected', 'Connected');
+        } else {
+            showTestResult(resultDiv, 'Invalid API key or connection failed', 'error');
+            updateStatus(statusDiv, 'error', 'Error');
+        }
+    } catch (error) {
+        showTestResult(resultDiv, 'Connection failed: ' + error.message, 'error');
+        updateStatus(statusDiv, 'error', 'Error');
+    }
+}
+
+// Test Anthropic API connection
+async function testAnthropicConnection() {
+    const apiKey = document.getElementById('anthropicKey')?.value;
+    const resultDiv = document.getElementById('anthropicTestResult');
+    const statusDiv = document.getElementById('anthropicStatus');
+
+    if (!apiKey) {
+        showTestResult(resultDiv, 'Please enter an API key first', 'error');
+        updateStatus(statusDiv, 'not-configured', 'Not Configured');
+        return;
+    }
+
+    showTestResult(resultDiv, 'Testing connection...', 'info');
+
+    try {
+        // Send to background script for testing (can't call Anthropic directly from options page)
+        chrome.runtime.sendMessage({
+            action: 'testAPI',
+            api: 'anthropic',
+            config: { apiKey }
+        }, (response) => {
+            if (response?.success) {
+                showTestResult(resultDiv, 'Connection successful! Claude is ready.', 'success');
+                updateStatus(statusDiv, 'connected', 'Connected');
+            } else {
+                showTestResult(resultDiv, response?.message || 'Connection failed', 'error');
+                updateStatus(statusDiv, 'error', 'Error');
+            }
+        });
+    } catch (error) {
+        showTestResult(resultDiv, 'Connection failed: ' + error.message, 'error');
         updateStatus(statusDiv, 'error', 'Error');
     }
 }
@@ -558,6 +638,18 @@ function updateConnectionStatuses() {
     const openaiStatus = document.getElementById('openaiStatus');
     if (openaiStatus && settings.openaiKey) {
         updateStatus(openaiStatus, 'configured', 'Configured');
+    }
+
+    // Update Google status
+    const googleStatus = document.getElementById('googleStatus');
+    if (googleStatus && settings.googleApiKey) {
+        updateStatus(googleStatus, 'configured', 'Configured');
+    }
+
+    // Update Anthropic status
+    const anthropicStatus = document.getElementById('anthropicStatus');
+    if (anthropicStatus && settings.anthropicKey) {
+        updateStatus(anthropicStatus, 'configured', 'Configured');
     }
 
     // Update n8n status

@@ -37,10 +37,48 @@ html, body {
 }
 
 .header h1 {
-    flex: 1;
     font-size: 18px;
     font-weight: 600;
     letter-spacing: -0.5px;
+}
+
+.model-selector {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.model-dropdown {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.model-dropdown:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.model-dropdown option {
+    background: #3b82f6;
+    color: white;
+    padding: 4px;
+}
+
+.model-dropdown optgroup {
+    font-weight: bold;
+    background: #2563eb;
+    color: white;
+}
+
+.model-dropdown optgroup option {
+    font-weight: normal;
+    padding-left: 15px;
 }
 
 .status {

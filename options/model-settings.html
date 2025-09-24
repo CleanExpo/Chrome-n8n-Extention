@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Model Settings - Latest Models</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .provider-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .provider-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .provider-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .provider-name {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .provider-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .openai-icon { background: linear-gradient(135deg, #00A67E 0%, #00D4AA 100%); }
+        .google-icon { background: linear-gradient(135deg, #4285F4 0%, #34A853 100%); }
+        .anthropic-icon { background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-connected {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-disconnected {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-not-configured {
+            background: #6b7280;
+            color: white;
+        }
+
+        .api-key-section {
+            margin-bottom: 20px;
+        }
+
+        .api-key-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .api-key-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-key-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-test {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-test:hover {
+            background: #5568d3;
+        }
+
+        .model-selection {
+            margin-top: 20px;
+        }
+
+        .model-selection h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #374151;
+        }
+
+        .model-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .model-option {
+            padding: 12px;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-option:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .model-option.selected {
+            background: #ede9fe;
+            border-color: #667eea;
+        }
+
+        .model-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .model-description {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .new-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+
+        .coming-soon {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .test-result.success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+            display: block;
+        }
+
+        .test-result.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+
+        .save-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 40px;
+            font-size: 16px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #1e3a8a;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #3730a3;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .provider-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .provider-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Model Configuration</h1>
+            <p>Configure the latest AI models including GPT-4 Turbo, Gemini Pro, and Claude 3</p>
+        </div>
+
+        <div class="info-box">
+            <h3>ℹ️ Latest Models Available</h3>
+            <p>
+                This extension now supports the newest AI models:
+                • OpenAI GPT-4 Turbo (128K context)
+                • Google Gemini Pro & Ultra
+                • Anthropic Claude 3 (Opus, Sonnet, Haiku)
+            </p>
+        </div>
+
+        <div class="settings-grid">
+            <!-- OpenAI Card -->
+            <div class="provider-card">
+                <div class="provider-header">
+                    <div class="provider-name">
+                        <div class="provider-icon openai-icon">🧠</div>
+                        OpenAI
+                    </div>
+                    <span class="status-badge" id="openaiStatus">Not Configured</span>
+                </div>
+
+                <div class="api-key-section">
+                    <div class="api-key-label">API Key</div>
+                    <div class="api-key-input-group">
+                        <input type="password" class="api-key-input" id="openaiKey" placeholder="sk-...">
+                        <button class="btn btn-test" onclick="testOpenAI()">Test</button>
+                    </div>
+                    <div class="test-result" id="openaiResult"></div>
+                </div>
+
+                <div class="model-selection">
+                    <h3>Available Models</h3>
+                    <div class="model-list">
+                        <div class="model-option" data-provider="openai" data-model="gpt-4-turbo-preview">
+                            <div class="model-name">GPT-4 Turbo <span class="new-badge">NEW</span></div>
+                            <div class="model-description">Latest model with 128K context, updated knowledge</div>
+                        </div>
+                        <div class="model-option" data-provider="openai" data-model="gpt-4">
+                            <div class="model-name">GPT-4</div>
+                            <div class="model-description">Most capable, best for complex tasks</div>
+                        </div>
+                        <div class="model-option" data-provider="openai" data-model="gpt-4-32k">
+                            <div class="model-name">GPT-4 32K</div>
+                            <div class="model-description">Extended 32K token context window</div>
+                        </div>
+                        <div class="model-option" data-provider="openai" data-model="gpt-3.5-turbo">
+                            <div class="model-name">GPT-3.5 Turbo</div>
+                            <div class="model-description">Fast and cost-effective</div>
+                        </div>
+                        <div class="model-option" data-provider="openai" data-model="gpt-3.5-turbo-16k">
+                            <div class="model-name">GPT-3.5 Turbo 16K</div>
+                            <div class="model-description">Extended context for longer conversations</div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="https://platform.openai.com/api-keys" target="_blank" class="provider-link">
+                    Get OpenAI API Key →
+                </a>
+            </div>
+
+            <!-- Google Gemini Card -->
+            <div class="provider-card">
+                <div class="provider-header">
+                    <div class="provider-name">
+                        <div class="provider-icon google-icon">🌟</div>
+                        Google AI
+                    </div>
+                    <span class="status-badge" id="googleStatus">Not Configured</span>
+                </div>
+
+                <div class="api-key-section">
+                    <div class="api-key-label">API Key</div>
+                    <div class="api-key-input-group">
+                        <input type="password" class="api-key-input" id="googleApiKey" placeholder="AIza...">
+                        <button class="btn btn-test" onclick="testGoogle()">Test</button>
+                    </div>
+                    <div class="test-result" id="googleResult"></div>
+                </div>
+
+                <div class="model-selection">
+                    <h3>Available Models</h3>
+                    <div class="model-list">
+                        <div class="model-option" data-provider="google" data-model="gemini-pro">
+                            <div class="model-name">Gemini Pro <span class="new-badge">NEW</span></div>
+                            <div class="model-description">Google's most capable model for text</div>
+                        </div>
+                        <div class="model-option" data-provider="google" data-model="gemini-pro-vision">
+                            <div class="model-name">Gemini Pro Vision</div>
+                            <div class="model-description">Multimodal: understands text and images</div>
+                        </div>
+                        <div class="model-option coming-soon" data-provider="google" data-model="gemini-ultra">
+                            <div class="model-name">Gemini Ultra <span class="new-badge">SOON</span></div>
+                            <div class="model-description">Most powerful model (coming soon)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="https://makersuite.google.com/app/apikey" target="_blank" class="provider-link">
+                    Get Google AI API Key →
+                </a>
+            </div>
+
+            <!-- Anthropic Claude Card -->
+            <div class="provider-card">
+                <div class="provider-header">
+                    <div class="provider-name">
+                        <div class="provider-icon anthropic-icon">🎭</div>
+                        Anthropic
+                    </div>
+                    <span class="status-badge" id="anthropicStatus">Not Configured</span>
+                </div>
+
+                <div class="api-key-section">
+                    <div class="api-key-label">API Key</div>
+                    <div class="api-key-input-group">
+                        <input type="password" class="api-key-input" id="anthropicKey" placeholder="sk-ant-...">
+                        <button class="btn btn-test" onclick="testAnthropic()">Test</button>
+                    </div>
+                    <div class="test-result" id="anthropicResult"></div>
+                </div>
+
+                <div class="model-selection">
+                    <h3>Available Models</h3>
+                    <div class="model-list">
+                        <div class="model-option" data-provider="anthropic" data-model="claude-3-opus">
+                            <div class="model-name">Claude 3 Opus <span class="new-badge">NEW</span></div>
+                            <div class="model-description">Most powerful, excels at complex tasks</div>
+                        </div>
+                        <div class="model-option" data-provider="anthropic" data-model="claude-3-sonnet">
+                            <div class="model-name">Claude 3 Sonnet</div>
+                            <div class="model-description">Balanced performance and speed</div>
+                        </div>
+                        <div class="model-option" data-provider="anthropic" data-model="claude-3-haiku">
+                            <div class="model-name">Claude 3 Haiku</div>
+                            <div class="model-description">Fastest responses, efficient</div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="https://console.anthropic.com/account/keys" target="_blank" class="provider-link">
+                    Get Anthropic API Key →
+                </a>
+            </div>
+        </div>
+
+        <div class="save-section">
+            <button class="btn btn-save" onclick="saveSettings()">
+                💾 Save All Settings
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedProvider = 'openai';
+        let selectedModel = 'gpt-4-turbo-preview';
+
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            setupModelSelection();
+        });
+
+        // Load settings from storage
+        async function loadSettings() {
+            chrome.storage.sync.get(null, (settings) => {
+                // Apply API keys
+                if (settings.openaiKey) {
+                    document.getElementById('openaiKey').value = settings.openaiKey;
+                    updateStatus('openai', 'connected');
+                }
+                if (settings.googleApiKey) {
+                    document.getElementById('googleApiKey').value = settings.googleApiKey;
+                    updateStatus('google', 'connected');
+                }
+                if (settings.anthropicKey) {
+                    document.getElementById('anthropicKey').value = settings.anthropicKey;
+                    updateStatus('anthropic', 'connected');
+                }
+
+                // Apply selected model
+                selectedProvider = settings.selectedProvider || 'openai';
+                selectedModel = settings.selectedModel || 'gpt-4-turbo-preview';
+                selectModel(selectedProvider, selectedModel);
+            });
+        }
+
+        // Setup model selection
+        function setupModelSelection() {
+            document.querySelectorAll('.model-option:not(.coming-soon)').forEach(option => {
+                option.addEventListener('click', () => {
+                    const provider = option.dataset.provider;
+                    const model = option.dataset.model;
+                    selectModel(provider, model);
+                });
+            });
+        }
+
+        // Select a model
+        function selectModel(provider, model) {
+            // Remove all selected classes
+            document.querySelectorAll('.model-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            // Add selected class to chosen model
+            const selected = document.querySelector(`[data-provider="${provider}"][data-model="${model}"]`);
+            if (selected) {
+                selected.classList.add('selected');
+                selectedProvider = provider;
+                selectedModel = model;
+            }
+        }
+
+        // Test OpenAI connection
+        async function testOpenAI() {
+            const apiKey = document.getElementById('openaiKey').value;
+            const resultDiv = document.getElementById('openaiResult');
+
+            if (!apiKey) {
+                showResult(resultDiv, 'Please enter an API key', 'error');
+                return;
+            }
+
+            showResult(resultDiv, 'Testing connection...', 'info');
+
+            chrome.runtime.sendMessage({
+                action: 'testAPI',
+                api: 'openai',
+                config: { apiKey }
+            }, (response) => {
+                if (response.success) {
+                    showResult(resultDiv, response.message, 'success');
+                    updateStatus('openai', 'connected');
+                } else {
+                    showResult(resultDiv, response.message, 'error');
+                    updateStatus('openai', 'error');
+                }
+            });
+        }
+
+        // Test Google connection
+        async function testGoogle() {
+            const apiKey = document.getElementById('googleApiKey').value;
+            const resultDiv = document.getElementById('googleResult');
+
+            if (!apiKey) {
+                showResult(resultDiv, 'Please enter an API key', 'error');
+                return;
+            }
+
+            showResult(resultDiv, 'Testing connection...', 'info');
+
+            chrome.runtime.sendMessage({
+                action: 'testAPI',
+                api: 'google',
+                config: { apiKey }
+            }, (response) => {
+                if (response.success) {
+                    showResult(resultDiv, response.message, 'success');
+                    updateStatus('google', 'connected');
+                } else {
+                    showResult(resultDiv, response.message, 'error');
+                    updateStatus('google', 'error');
+                }
+            });
+        }
+
+        // Test Anthropic connection
+        async function testAnthropic() {
+            const apiKey = document.getElementById('anthropicKey').value;
+            const resultDiv = document.getElementById('anthropicResult');
+
+            if (!apiKey) {
+                showResult(resultDiv, 'Please enter an API key', 'error');
+                return;
+            }
+
+            showResult(resultDiv, 'Testing connection...', 'info');
+
+            chrome.runtime.sendMessage({
+                action: 'testAPI',
+                api: 'anthropic',
+                config: { apiKey }
+            }, (response) => {
+                if (response.success) {
+                    showResult(resultDiv, response.message, 'success');
+                    updateStatus('anthropic', 'connected');
+                } else {
+                    showResult(resultDiv, response.message, 'error');
+                    updateStatus('anthropic', 'error');
+                }
+            });
+        }
+
+        // Show result message
+        function showResult(element, message, type) {
+            element.textContent = message;
+            element.className = `test-result ${type}`;
+            element.style.display = 'block';
+        }
+
+        // Update status badge
+        function updateStatus(provider, status) {
+            const badge = document.getElementById(`${provider}Status`);
+            if (badge) {
+                switch(status) {
+                    case 'connected':
+                        badge.textContent = 'Connected';
+                        badge.className = 'status-badge status-connected';
+                        break;
+                    case 'error':
+                        badge.textContent = 'Error';
+                        badge.className = 'status-badge status-disconnected';
+                        break;
+                    default:
+                        badge.textContent = 'Not Configured';
+                        badge.className = 'status-badge status-not-configured';
+                }
+            }
+        }
+
+        // Save all settings
+        async function saveSettings() {
+            const settings = {
+                openaiKey: document.getElementById('openaiKey').value,
+                googleApiKey: document.getElementById('googleApiKey').value,
+                anthropicKey: document.getElementById('anthropicKey').value,
+                selectedProvider: selectedProvider,
+                selectedModel: selectedModel
+            };
+
+            // Save to storage
+            chrome.storage.sync.set(settings, () => {
+                // Notify background script
+                chrome.runtime.sendMessage({
+                    action: 'saveSettings',
+                    settings: settings
+                }, () => {
+                    alert('Settings saved successfully! The extension will now use ' + selectedModel);
+
+                    // Also update the selected model in background
+                    chrome.runtime.sendMessage({
+                        action: 'setModel',
+                        provider: selectedProvider,
+                        model: selectedModel
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+</html>
