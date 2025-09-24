@@ -97,8 +97,24 @@ async function processAIMessage(message, context) {
     });
 
     state.settings = settings;
+    console.log('Loaded settings, has OpenAI key:', !!settings.openaiKey);
 
-    // Try n8n first
+    // Try OpenAI first (since it's connected)
+    if (settings.openaiKey) {
+        try {
+            console.log('Calling OpenAI API...');
+            const response = await callOpenAI(settings.openaiKey, message, context);
+            if (response) {
+                console.log('OpenAI response received');
+                return response;
+            }
+        } catch (error) {
+            console.error('OpenAI failed:', error);
+            return `OpenAI Error: ${error.message}. Please check your API key has credits.`;
+        }
+    }
+
+    // Try n8n as fallback
     if (settings.n8nWebhookUrl) {
         try {
             console.log('Trying n8n webhook...');
@@ -109,26 +125,15 @@ async function processAIMessage(message, context) {
         }
     }
 
-    // Try OpenAI
-    if (settings.openaiKey) {
-        try {
-            console.log('Trying OpenAI...');
-            const response = await callOpenAI(settings.openaiKey, message, context);
-            if (response) return response;
-        } catch (error) {
-            console.log('OpenAI failed:', error.message);
-        }
-    }
-
     // No API configured
-    return `I need to be set up first! Please:
+    return `No API configured! But I see OpenAI shows as connected in your settings.
+
+Please try:
 1. Click the extension icon
 2. Go to Settings (⚙️ button)
-3. Enter your OpenAI API key or n8n webhook URL
-4. Save and try again!
-
-For OpenAI: Get a key at platform.openai.com
-For n8n: Set up a webhook in your n8n workflow`;
+3. Make sure your OpenAI API key is saved
+4. Click Save Settings
+5. Try again!`;
 }
 
 // Call n8n webhook - SIMPLE VERSION

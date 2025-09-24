@@ -97,10 +97,18 @@ class SimpleAIAssistant {
                     title: currentTab?.title || ''
                 }
             }, response => {
-                if (response?.success && response?.reply) {
+                console.log('Response from background:', response);
+
+                if (chrome.runtime.lastError) {
+                    console.error('Runtime error:', chrome.runtime.lastError);
+                    resolve('Connection error. Please reload the extension in chrome://extensions/');
+                } else if (response?.success && response?.reply) {
+                    resolve(response.reply);
+                } else if (response?.reply) {
+                    // Handle response even without success flag
                     resolve(response.reply);
                 } else {
-                    resolve('I can help you with that! Please make sure your API keys are configured in settings.');
+                    resolve('Please configure your OpenAI API key in settings (it shows as connected!)');
                 }
             });
         });
