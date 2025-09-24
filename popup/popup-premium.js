@@ -99,6 +99,12 @@ class PremiumPopup {
             });
         });
 
+        // Capture screen functionality
+        const captureBtn = document.getElementById('captureScreen');
+        if (captureBtn) {
+            captureBtn.addEventListener('click', () => this.captureScreen());
+        }
+
         // History items
         document.getElementById('clearHistory')?.addEventListener('click', () => this.clearHistory());
 
@@ -504,8 +510,58 @@ class PremiumPopup {
         });
     }
 
+    async captureScreen() {
+        const captureBtn = document.getElementById('captureScreen');
+
+        try {
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                // Visual feedback
+                const originalContent = captureBtn.innerHTML;
+                captureBtn.innerHTML = `
+                    <div class="tool-icon">⏳</div>
+                    <div class="tool-content">
+                        <h4 class="tool-name">Capturing...</h4>
+                        <p class="tool-description">Please wait</p>
+                    </div>
+                    <div class="tool-status available"></div>
+                `;
+
+                // Send message to background script
+                chrome.runtime.sendMessage({ action: 'captureScreen' });
+
+                // Success feedback
+                setTimeout(() => {
+                    captureBtn.innerHTML = `
+                        <div class="tool-icon">✅</div>
+                        <div class="tool-content">
+                            <h4 class="tool-name">Captured!</h4>
+                            <p class="tool-description">Screenshot saved</p>
+                        </div>
+                        <div class="tool-status available"></div>
+                    `;
+                }, 1000);
+
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    captureBtn.innerHTML = originalContent;
+                }, 3000);
+
+                this.showToast('Screenshot captured successfully!', 'success');
+
+            } else {
+                this.showToast('Screenshot capture not available in this context', 'warning');
+            }
+        } catch (error) {
+            console.error('Screen capture failed:', error);
+            this.showToast('Failed to capture screenshot', 'error');
+        }
+    }
+
     openTool(toolType) {
         const toolActions = {
+            'capture': () => {
+                this.captureScreen();
+            },
             'vertex-ai': () => {
                 this.switchTab('chat');
                 this.currentModel = 'vertex-palm';
@@ -547,7 +603,9 @@ class PremiumPopup {
 
             let isAvailable = true;
 
-            if (['vertex-ai', 'document-ai', 'translate', 'speech', 'analytics', 'bigquery'].includes(toolType)) {
+            if (toolType === 'capture') {
+                isAvailable = typeof chrome !== 'undefined' && chrome.runtime;
+            } else if (['vertex-ai', 'document-ai', 'translate', 'speech', 'analytics', 'bigquery'].includes(toolType)) {
                 isAvailable = typeof window.googleCloudIntegration !== 'undefined' && window.googleCloudIntegration.initialized;
             }
 
