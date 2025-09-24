@@ -527,26 +527,54 @@ class PremiumPopup {
                 `;
 
                 // Send message to background script
-                chrome.runtime.sendMessage({ action: 'captureScreen' });
+                chrome.runtime.sendMessage({ action: 'captureScreen' }, (response) => {
+                    if (response && response.success) {
+                        // Success feedback
+                        captureBtn.innerHTML = `
+                            <div class="tool-icon">✅</div>
+                            <div class="tool-content">
+                                <h4 class="tool-name">Captured!</h4>
+                                <p class="tool-description">Screenshot saved</p>
+                            </div>
+                            <div class="tool-status available"></div>
+                        `;
 
-                // Success feedback
-                setTimeout(() => {
-                    captureBtn.innerHTML = `
-                        <div class="tool-icon">✅</div>
-                        <div class="tool-content">
-                            <h4 class="tool-name">Captured!</h4>
-                            <p class="tool-description">Screenshot saved</p>
-                        </div>
-                        <div class="tool-status available"></div>
-                    `;
-                }, 1000);
+                        this.showToast('Screenshot captured successfully!', 'success');
 
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    captureBtn.innerHTML = originalContent;
-                }, 3000);
+                        // Optionally create a download link for the screenshot
+                        if (response.dataUrl) {
+                            const link = document.createElement('a');
+                            link.href = response.dataUrl;
+                            link.download = `screenshot-${Date.now()}.png`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }
 
-                this.showToast('Screenshot captured successfully!', 'success');
+                        // Reset after 2 seconds
+                        setTimeout(() => {
+                            captureBtn.innerHTML = originalContent;
+                        }, 3000);
+
+                    } else {
+                        // Error feedback
+                        captureBtn.innerHTML = `
+                            <div class="tool-icon">❌</div>
+                            <div class="tool-content">
+                                <h4 class="tool-name">Failed</h4>
+                                <p class="tool-description">Try again</p>
+                            </div>
+                            <div class="tool-status available"></div>
+                        `;
+
+                        this.showToast(`Failed to capture: ${response?.error || 'Unknown error'}`, 'error');
+
+                        // Reset after 2 seconds
+                        setTimeout(() => {
+                            captureBtn.innerHTML = originalContent;
+                        }, 3000);
+                    }
+                });
 
             } else {
                 this.showToast('Screenshot capture not available in this context', 'warning');

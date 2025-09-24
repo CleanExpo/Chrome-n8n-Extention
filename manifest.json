@@ -28,6 +28,7 @@
     "storage",
     "activeTab",
     "tabs",
+    "tabCapture",
     "identity",
     "identity.email",
     "contextMenus",

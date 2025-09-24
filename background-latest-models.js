@@ -115,6 +115,30 @@ async function handleMessage(request, sender, sendResponse) {
                 }
                 break;
 
+            case 'captureScreen':
+                try {
+                    // Get active tab
+                    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                    if (activeTab) {
+                        // Capture visible area
+                        const dataUrl = await chrome.tabs.captureVisibleTab(activeTab.windowId, {
+                            format: 'png',
+                            quality: 100
+                        });
+
+                        // Optionally save to downloads or show in notification
+                        console.log('Screenshot captured successfully');
+
+                        sendResponse({ success: true, dataUrl, screenshot: dataUrl });
+                    } else {
+                        sendResponse({ success: false, error: 'No active tab found' });
+                    }
+                } catch (error) {
+                    console.error('Screen capture error:', error);
+                    sendResponse({ success: false, error: error.message });
+                }
+                break;
+
             case 'getStatus':
                 sendResponse({
                     connected: state.connected,
