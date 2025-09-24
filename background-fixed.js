@@ -695,7 +695,8 @@ async function testAPIConnection(api, config) {
             case 'openai':
                 return await testOpenAI(config.apiKey);
             case 'n8n':
-                return await testN8n(config.url);
+                // Pass both URL and API key for n8n cloud
+                return await testN8n(config.url, config.apiKey);
             case 'context7':
                 return await testContext7(config.apiKey);
             default:
@@ -728,9 +729,20 @@ async function testOpenAI(apiKey) {
 }
 
 /**
- * Test n8n connection
+ * Get stored settings helper function
  */
-async function testN8n(url) {
+async function getStoredSettings() {
+    return new Promise((resolve) => {
+        chrome.storage.sync.get(null, (result) => {
+            resolve(result || {});
+        });
+    });
+}
+
+/**
+ * Test n8n connection - NOW USES POST TO MATCH WEBHOOK CONFIGURATION
+ */
+async function testN8n(url, apiKey) {
     // n8n is optional - don't show as error if not configured
     if (!url || url.trim() === '') {
         return { success: true, message: 'n8n not configured (optional)' };
@@ -763,39 +775,60 @@ async function testN8n(url) {
             }
         }
 
-        // Try to POST to webhook endpoint
+        // ALWAYS use POST method to match webhook configuration
         const headers = { 'Content-Type': 'application/json' };
 
         // Add API key if provided (for n8n cloud)
-        const settings = await getStoredSettings();
+        // Accept apiKey as parameter OR get from storage
+        const settings = apiKey ? { n8nApiKey: apiKey } : await getStoredSettings();
         if (settings.n8nApiKey && isCloud) {
             headers['X-N8N-API-KEY'] = settings.n8nApiKey;
             headers['Authorization'] = `Bearer ${settings.n8nApiKey}`;
         }
 
+        // Use POST method to test webhook (matching your webhook configuration)
         const response = await fetchWithTimeout(url, {
-            method: 'POST',
+            method: 'POST',  // ALWAYS POST
             headers: headers,
-            body: JSON.stringify({ test: true, source: 'chrome-extension' })
+            body: JSON.stringify({
+                test: true,
+                source: 'chrome-extension',
+                action: 'test-connection',
+                timestamp: new Date().toISOString()
+            })
         }, 5000);
 
         if (response.ok) {
             const instanceName = isCloud ? 'n8n Cloud' : 'n8n';
+            const data = await response.json();
+            // Check if we got a valid response
+            if (data.success || data.reply) {
+                return { success: true, message: `${instanceName} webhook connected and responding!` };
+            }
             return { success: true, message: `${instanceName} webhook connected successfully` };
         } else if (response.status === 404) {
+            // More helpful error message
+            const errorBody = await response.text();
+            if (errorBody.includes('not registered for')) {
+                return {
+                    success: false,
+                    message: 'Webhook found but make sure it\'s configured for POST method and workflow is ACTIVE'
+                };
+            }
             const setupMsg = isCloud ?
                 'Webhook not found. Create and activate workflow in n8n cloud.' :
                 'Webhook not found. Create webhook in n8n first.';
             return { success: false, message: setupMsg };
         } else if (response.status === 401 || response.status === 403) {
-            return { success: false, message: 'Authentication failed. Check webhook settings.' };
+            return { success: false, message: 'Authentication failed. Check your API key.' };
         } else {
-            return { success: false, message: `n8n returned: ${response.status}` };
+            const errorText = await response.text();
+            return { success: false, message: `n8n returned: ${response.status} - ${errorText}` };
         }
     } catch (error) {
         // More user-friendly error messages
         if (error.message.includes('Failed to fetch')) {
-            return { success: false, message: 'Cannot reach n8n. Is it running?' };
+            return { success: false, message: 'Cannot reach n8n. Check URL and internet connection.' };
         }
         return { success: false, message: `Connection failed: ${error.message}` };
     }

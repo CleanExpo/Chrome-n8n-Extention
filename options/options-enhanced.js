@@ -413,6 +413,80 @@ async function testN8nConnection() {
     }
 }
 
+// Test n8n connection - Uses POST to match webhook configuration
+async function testN8nConnection() {
+    const webhookUrl = document.getElementById('n8nWebhookUrl')?.value;
+    const apiKey = document.getElementById('n8nApiKey')?.value;
+    const resultDiv = document.getElementById('n8nApiTestResult');
+    const statusDiv = document.getElementById('n8nApiStatus');
+
+    if (!webhookUrl) {
+        showTestResult(resultDiv, 'Please enter a webhook URL first', 'error');
+        updateStatus(statusDiv, 'not-configured', 'Not Configured');
+        return;
+    }
+
+    showTestResult(resultDiv, 'Testing n8n connection...', 'info');
+
+    try {
+        // Check if it's n8n cloud
+        const isCloud = webhookUrl.includes('.n8n.cloud') || webhookUrl.includes('n8n.cloud');
+
+        // Build headers
+        const headers = { 'Content-Type': 'application/json' };
+
+        // Add API key for cloud instances
+        if (isCloud && apiKey) {
+            headers['X-N8N-API-KEY'] = apiKey;
+            headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+
+        // Use POST method to match webhook configuration
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                test: true,
+                source: 'chrome-extension-settings',
+                action: 'test-connection',
+                timestamp: new Date().toISOString()
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success || data.reply) {
+                showTestResult(resultDiv, 'n8n webhook connected and responding!', 'success');
+                updateStatus(statusDiv, 'connected', 'Connected');
+            } else {
+                showTestResult(resultDiv, 'n8n webhook connected successfully!', 'success');
+                updateStatus(statusDiv, 'connected', 'Connected');
+            }
+        } else if (response.status === 404) {
+            const errorText = await response.text();
+            if (errorText.includes('not registered for')) {
+                showTestResult(resultDiv, 'Webhook found! Make sure workflow is ACTIVE and configured for POST method', 'warning');
+            } else {
+                showTestResult(resultDiv, 'Webhook not found. Create and activate your workflow in n8n', 'error');
+            }
+            updateStatus(statusDiv, 'error', 'Not Found');
+        } else if (response.status === 401 || response.status === 403) {
+            showTestResult(resultDiv, 'Authentication failed. Check your API key', 'error');
+            updateStatus(statusDiv, 'error', 'Auth Failed');
+        } else {
+            showTestResult(resultDiv, `n8n returned: ${response.status}`, 'error');
+            updateStatus(statusDiv, 'error', 'Error');
+        }
+    } catch (error) {
+        if (error.message.includes('Failed to fetch')) {
+            showTestResult(resultDiv, 'Cannot reach n8n. Check URL and internet connection', 'error');
+        } else {
+            showTestResult(resultDiv, `Connection failed: ${error.message}`, 'error');
+        }
+        updateStatus(statusDiv, 'error', 'Error');
+    }
+}
+
 // Test Context7 connection
 async function testContext7Connection() {
     const apiKey = document.getElementById('context7ApiKey')?.value;
