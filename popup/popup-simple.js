@@ -15,6 +15,7 @@ class SimpleAIAssistant {
         this.chatContainer = document.getElementById('chatContainer');
         this.messageInput = document.getElementById('messageInput');
         this.sendBtn = document.getElementById('sendBtn');
+        this.captureBtn = document.getElementById('captureBtn');
         this.clearBtn = document.getElementById('clearBtn');
         this.settingsBtn = document.getElementById('settingsBtn');
         this.helpBtn = document.getElementById('helpBtn');
@@ -51,6 +52,7 @@ class SimpleAIAssistant {
         });
 
         // Footer buttons
+        this.captureBtn?.addEventListener('click', () => this.captureScreen());
         this.clearBtn?.addEventListener('click', () => this.clearChat());
         this.settingsBtn?.addEventListener('click', () => this.openSettings());
         this.helpBtn?.addEventListener('click', () => this.showHelp());
@@ -200,6 +202,51 @@ class SimpleAIAssistant {
         if (prompt) {
             this.messageInput.value = prompt;
             this.sendMessage();
+        }
+    }
+
+    async captureScreen() {
+        if (!chrome.runtime) {
+            this.showMessage('Screenshot capture not available in this context', 'error');
+            return;
+        }
+
+        try {
+            // Visual feedback
+            const originalText = this.captureBtn.textContent;
+            this.captureBtn.textContent = '⏳';
+            this.captureBtn.disabled = true;
+
+            // Send message to background script
+            const response = await new Promise((resolve) => {
+                chrome.runtime.sendMessage({ action: 'captureScreen' }, resolve);
+            });
+
+            if (response && response.success) {
+                this.showMessage('Screenshot captured successfully! 📸', 'success');
+
+                // Auto-download the screenshot
+                if (response.dataUrl) {
+                    const link = document.createElement('a');
+                    link.href = response.dataUrl;
+                    link.download = `screenshot-${Date.now()}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } else {
+                this.showMessage(`Failed to capture screenshot: ${response?.error || 'Unknown error'}`, 'error');
+            }
+
+        } catch (error) {
+            console.error('Screen capture failed:', error);
+            this.showMessage('Failed to capture screenshot', 'error');
+        } finally {
+            // Reset button
+            setTimeout(() => {
+                this.captureBtn.textContent = '📸';
+                this.captureBtn.disabled = false;
+            }, 2000);
         }
     }
 
