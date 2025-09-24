@@ -36,14 +36,16 @@
   ],
 
   "background": {
-    "service_worker": "background-fixed.js"
+    "service_worker": "background-enhanced.js"
   },
 
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
+      "js": ["content-enhanced.js"],
+      "run_at": "document_idle",
+      "all_frames": false,
+      "match_about_blank": false
     }
   ],
 
@@ -52,12 +54,12 @@
       "resources": [
         "private-auth.js",
         "images/*",
+        "onboarding/*",
+        "popup/popup-simple.html",
+        "popup/popup-simple.css",
+        "popup/popup-simple.js",
         "floating-widget-enhanced.js",
         "floating-widget-enhanced.css",
-        "popup/popup-chat.html",
-        "popup/popup-enhanced.html",
-        "popup/popup-enhanced.css",
-        "popup/popup-enhanced.js",
         "n8n-docs/*.md",
         "chrome-extension-docs/*.md",
         "opal-ai-docs/*.md",

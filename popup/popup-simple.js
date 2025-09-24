@@ -134,6 +134,9 @@ class SimpleAIAssistant {
     }
 
     showTypingIndicator() {
+        // Remove any existing indicator
+        this.hideTypingIndicator();
+
         const indicator = document.createElement('div');
         indicator.className = 'message assistant';
         indicator.id = 'typingIndicator';

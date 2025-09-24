@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to AI Assistant</title>
+    <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+    <div class="onboarding-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <span>Welcome</span>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <span>Setup APIs</span>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <span>Customize</span>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <span>Ready!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Welcome -->
+        <div class="onboarding-step active" id="step1">
+            <div class="step-content">
+                <div class="welcome-animation">
+                    <div class="robot-wave">🤖</div>
+                </div>
+                <h1>Welcome to Your AI Assistant!</h1>
+                <p class="subtitle">Let's get you set up in just 2 minutes</p>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <span class="feature-icon">💬</span>
+                        <h3>Instant Chat</h3>
+                        <p>Get AI help on any webpage</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">📝</span>
+                        <h3>Smart Summaries</h3>
+                        <p>Summarize articles instantly</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🌐</span>
+                        <h3>Translation</h3>
+                        <p>Translate any text</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">✨</span>
+                        <h3>Writing Help</h3>
+                        <p>Improve your writing</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="nextStep()">Get Started →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: API Setup -->
+        <div class="onboarding-step" id="step2">
+            <div class="step-content">
+                <h1>Connect Your AI</h1>
+                <p class="subtitle">Choose at least one AI service to power your assistant</p>
+
+                <!-- OpenAI Setup -->
+                <div class="api-setup-card">
+                    <div class="api-header">
+                        <h3>🧠 OpenAI (Recommended)</h3>
+                        <span class="badge">Most Popular</span>
+                    </div>
+                    <p>Use GPT-3.5 or GPT-4 for powerful AI responses</p>
+
+                    <div class="api-input-group">
+                        <input
+                            type="password"
+                            id="openaiKey"
+                            placeholder="sk-..."
+                            class="api-input"
+                        />
+                        <button class="btn-test" onclick="testOpenAI()">Test</button>
+                    </div>
+                    <div id="openaiStatus" class="status-message"></div>
+
+                    <details class="help-section">
+                        <summary>How to get an API key?</summary>
+                        <ol>
+                            <li>Go to <a href="https://platform.openai.com/signup" target="_blank">OpenAI Platform</a></li>
+                            <li>Sign up or log in</li>
+                            <li>Go to API Keys section</li>
+                            <li>Create new secret key</li>
+                            <li>Copy and paste it here</li>
+                        </ol>
+                    </details>
+                </div>
+
+                <!-- n8n Setup -->
+                <div class="api-setup-card">
+                    <div class="api-header">
+                        <h3>🔧 n8n Webhook (Advanced)</h3>
+                        <span class="badge">Optional</span>
+                    </div>
+                    <p>Connect to your n8n workflows for custom automation</p>
+
+                    <div class="api-input-group">
+                        <input
+                            type="url"
+                            id="n8nWebhook"
+                            placeholder="https://..."
+                            class="api-input"
+                        />
+                        <button class="btn-test" onclick="testN8n()">Test</button>
+                    </div>
+                    <div class="api-input-group">
+                        <input
+                            type="password"
+                            id="n8nApiKey"
+                            placeholder="API Key (for cloud)"
+                            class="api-input"
+                        />
+                    </div>
+                    <div id="n8nStatus" class="status-message"></div>
+
+                    <details class="help-section">
+                        <summary>How to set up n8n?</summary>
+                        <ol>
+                            <li>Create account at <a href="https://n8n.io" target="_blank">n8n.io</a></li>
+                            <li>Create new workflow</li>
+                            <li>Add Webhook trigger</li>
+                            <li>Set path to "chrome-extension"</li>
+                            <li>Activate workflow</li>
+                            <li>Copy webhook URL here</li>
+                        </ol>
+                    </details>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="nextStep()" id="continueBtn">Continue →</button>
+                    <button class="btn btn-link" onclick="skipStep()">Skip for now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Customize -->
+        <div class="onboarding-step" id="step3">
+            <div class="step-content">
+                <h1>Personalize Your Experience</h1>
+                <p class="subtitle">Choose your preferences</p>
+
+                <div class="preference-group">
+                    <label class="preference-label">Theme</label>
+                    <div class="theme-selector">
+                        <button class="theme-option active" data-theme="auto" onclick="selectTheme('auto')">
+                            <span>🌓</span>
+                            Auto
+                        </button>
+                        <button class="theme-option" data-theme="light" onclick="selectTheme('light')">
+                            <span>☀️</span>
+                            Light
+                        </button>
+                        <button class="theme-option" data-theme="dark" onclick="selectTheme('dark')">
+                            <span>🌙</span>
+                            Dark
+                        </button>
+                    </div>
+                </div>
+
+                <div class="preference-group">
+                    <label class="preference-label">Quick Actions</label>
+                    <p class="preference-help">Choose which quick actions to show</p>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 📝 Summarize
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 💡 Explain
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 🌐 Translate
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> ✨ Improve Writing
+                        </label>
+                    </div>
+                </div>
+
+                <div class="preference-group">
+                    <label class="preference-label">Notifications</label>
+                    <div class="toggle-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" checked>
+                            <span>Show notifications for AI responses</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Finish Setup →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Complete -->
+        <div class="onboarding-step" id="step4">
+            <div class="step-content">
+                <div class="success-animation">
+                    <div class="checkmark">✅</div>
+                </div>
+                <h1>You're All Set!</h1>
+                <p class="subtitle">Your AI Assistant is ready to help</p>
+
+                <div class="tips">
+                    <h3>Quick Tips:</h3>
+                    <div class="tip">
+                        <span class="tip-icon">📍</span>
+                        <div>
+                            <strong>Access the assistant</strong>
+                            <p>Click the extension icon in your browser toolbar</p>
+                        </div>
+                    </div>
+                    <div class="tip">
+                        <span class="tip-icon">⌨️</span>
+                        <div>
+                            <strong>Keyboard shortcut</strong>
+                            <p>Press Ctrl+Shift+A (Cmd+Shift+A on Mac) to open quickly</p>
+                        </div>
+                    </div>
+                    <div class="tip">
+                        <span class="tip-icon">🖱️</span>
+                        <div>
+                            <strong>Right-click menu</strong>
+                            <p>Select text and right-click for quick AI actions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="completeOnboarding()">Start Using AI Assistant</button>
+                    <button class="btn btn-secondary" onclick="openTutorial()">Watch Tutorial</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="welcome.js"></script>
+</body>
+</html>
