@@ -12,6 +12,8 @@ class FloatingAssistant {
         this.isDocked = false;
         this.isEnabled = true;
         this.isTyping = false;
+        this.toggleButtonDragged = false;
+        this.isToggleButtonHidden = false;
         this.theme = 'light';
         this.position = { x: window.innerWidth - 80, y: window.innerHeight - 100 };
         this.windowSize = { width: 380, height: 500 };
@@ -122,9 +124,7 @@ class FloatingAssistant {
 
                 /* Widget Button with pulse animation */
                 .n8n-widget-button {
-                    position: absolute;
-                    bottom: 20px;
-                    right: 20px;
+                    position: relative;
                     width: 60px;
                     height: 60px;
                     border-radius: 50%;
@@ -147,6 +147,71 @@ class FloatingAssistant {
                     50% {
                         opacity: .8;
                     }
+                }
+
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes slideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                }
+
+                /* Toggle Container */
+                .n8n-toggle-container {
+                    position: absolute;
+                    bottom: 20px;
+                    right: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                /* Hide Button */
+                .n8n-hide-button {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: var(--danger-color);
+                    border: none;
+                    color: white;
+                    font-size: 14px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    transform: scale(0.8);
+                    transition: all 0.2s ease;
+                    box-shadow: var(--shadow-md);
+                    z-index: 1001;
+                }
+
+                .n8n-toggle-container:hover .n8n-hide-button {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+
+                .n8n-hide-button:hover {
+                    background: #dc2626;
+                    transform: scale(1.1);
+                    box-shadow: var(--shadow-lg);
                 }
 
                 .n8n-widget-button:hover {
@@ -756,10 +821,15 @@ class FloatingAssistant {
                 }
             </style>
 
-            <button class="n8n-widget-button" id="n8n-widget-toggle" aria-label="Open AI Assistant">
-                <img src="${this.getResourceURL('images/icon-48.png')}" alt="n8n">
-                <span class="n8n-status-dot disconnected" id="n8n-status" aria-label="Connection status"></span>
-            </button>
+            <div class="n8n-toggle-container">
+                <button class="n8n-widget-button" id="n8n-widget-toggle" aria-label="Open AI Assistant">
+                    <img src="${this.getResourceURL('images/icon-48.png')}" alt="n8n">
+                    <span class="n8n-status-dot disconnected" id="n8n-status" aria-label="Connection status"></span>
+                </button>
+                <button class="n8n-hide-button" id="n8n-hide-toggle" aria-label="Hide AI Assistant" title="Hide (Double-click to show again)">
+                    ✕
+                </button>
+            </div>
 
             <div class="n8n-chat-window" id="n8n-chat-window" role="dialog" aria-label="AI Assistant Chat">
                 <div class="n8n-dock-resize" id="n8n-dock-resize"></div>
@@ -852,14 +922,14 @@ class FloatingAssistant {
         this.container = container;
 
         // Set initial position from saved preferences
-        const toggle = document.getElementById('n8n-widget-toggle');
+        const toggleContainer = document.querySelector('.n8n-toggle-container');
         const window = document.getElementById('n8n-chat-window');
 
-        if (toggle && !this.isDocked) {
-            toggle.style.left = `${this.position.x}px`;
-            toggle.style.top = `${this.position.y}px`;
-            toggle.style.right = 'auto';
-            toggle.style.bottom = 'auto';
+        if (toggleContainer && !this.isDocked) {
+            toggleContainer.style.left = `${this.position.x}px`;
+            toggleContainer.style.top = `${this.position.y}px`;
+            toggleContainer.style.right = 'auto';
+            toggleContainer.style.bottom = 'auto';
         }
 
         if (window && !this.isDocked) {
@@ -937,6 +1007,7 @@ class FloatingAssistant {
 
     attachEventListeners() {
         const toggle = document.getElementById('n8n-widget-toggle');
+        const hideBtn = document.getElementById('n8n-hide-toggle');
         const closeBtn = document.getElementById('n8n-close');
         const sendBtn = document.getElementById('n8n-send');
         const input = document.getElementById('n8n-input');
@@ -953,8 +1024,28 @@ class FloatingAssistant {
         const quickActions = document.querySelectorAll('.n8n-quick-action');
 
         if (toggle) {
-            toggle.addEventListener('click', () => this.toggleChat());
+            toggle.addEventListener('click', (e) => {
+                // Only toggle chat if it wasn't dragged
+                if (!this.toggleButtonDragged) {
+                    this.toggleChat();
+                }
+                this.toggleButtonDragged = false;
+            });
+
+            // Add drag functionality to the toggle button
+            this.setupToggleButtonDrag(toggle);
         }
+
+        if (hideBtn) {
+            hideBtn.addEventListener('click', () => this.hideToggleButton());
+        }
+
+        // Double-click anywhere to show hidden toggle button
+        document.addEventListener('dblclick', (e) => {
+            if (this.isToggleButtonHidden) {
+                this.showToggleButton();
+            }
+        });
 
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.toggleChat());
@@ -1067,6 +1158,66 @@ class FloatingAssistant {
         }
 
         this.saveCurrentPosition();
+    }
+
+    hideToggleButton() {
+        const container = document.querySelector('.n8n-toggle-container');
+        if (container) {
+            container.style.opacity = '0';
+            container.style.pointerEvents = 'none';
+            container.style.transform = 'scale(0.5)';
+            this.isToggleButtonHidden = true;
+
+            // Show a subtle notification
+            this.showNotification('AI Assistant hidden. Double-click anywhere to show again.', 3000);
+        }
+    }
+
+    showToggleButton() {
+        const container = document.querySelector('.n8n-toggle-container');
+        if (container) {
+            container.style.opacity = '1';
+            container.style.pointerEvents = 'auto';
+            container.style.transform = 'scale(1)';
+            this.isToggleButtonHidden = false;
+
+            // Brief animation to draw attention
+            container.style.animation = 'none';
+            setTimeout(() => {
+                container.style.animation = 'pulse 1s ease-in-out 2';
+            }, 100);
+        }
+    }
+
+    showNotification(message, duration = 3000) {
+        // Create a temporary notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            z-index: 2147483647;
+            max-width: 300px;
+            border: 1px solid var(--border-color);
+            animation: slideIn 0.3s ease-out;
+        `;
+
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, duration);
     }
 
     maximizeChat() {
@@ -1190,6 +1341,73 @@ class FloatingAssistant {
             // Save the new position
             this.saveCurrentPosition();
         };
+    }
+
+    setupToggleButtonDrag(toggle) {
+        let startX, startY, startLeft, startTop;
+        let isDragging = false;
+        let hasMoved = false;
+        const container = document.querySelector('.n8n-toggle-container');
+
+        const handleMouseDown = (e) => {
+            if (this.isDocked || !container) return;
+
+            isDragging = true;
+            hasMoved = false;
+
+            const rect = container.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            toggle.style.cursor = 'grabbing';
+            container.style.transition = 'none';
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+
+            e.preventDefault();
+        };
+
+        const handleMouseMove = (e) => {
+            if (!isDragging) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            // Check if mouse has moved significantly (more than 5px)
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                hasMoved = true;
+            }
+
+            const newLeft = Math.max(0, Math.min(window.innerWidth - 80, startLeft + dx));
+            const newTop = Math.max(0, Math.min(window.innerHeight - 100, startTop + dy));
+
+            container.style.left = `${newLeft}px`;
+            container.style.top = `${newTop}px`;
+            container.style.right = 'auto';
+            container.style.bottom = 'auto';
+
+            this.position.x = newLeft;
+            this.position.y = newTop;
+        };
+
+        const handleMouseUp = () => {
+            if (isDragging && hasMoved) {
+                this.toggleButtonDragged = true;
+                this.saveCurrentPosition();
+            }
+
+            isDragging = false;
+            toggle.style.cursor = 'pointer';
+            container.style.transition = '';
+
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        toggle.addEventListener('mousedown', handleMouseDown);
     }
 
     setupResizing(handle) {
@@ -1464,11 +1682,11 @@ class FloatingAssistant {
     }
 
     saveCurrentPosition() {
-        const toggle = document.getElementById('n8n-widget-toggle');
+        const toggleContainer = document.querySelector('.n8n-toggle-container');
         const window = document.getElementById('n8n-chat-window');
 
-        if (toggle && !this.isDocked) {
-            const rect = toggle.getBoundingClientRect();
+        if (toggleContainer && !this.isDocked) {
+            const rect = toggleContainer.getBoundingClientRect();
             this.position = {
                 x: rect.left,
                 y: rect.top
