@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Extension - Premium Settings</title>
+    <link rel="stylesheet" href="options-premium.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🤖</div>
+                    <h1>AI Assistant Pro</h1>
+                </div>
+                <div class="theme-toggle">
+                    <button id="themeToggle" aria-label="Toggle theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs" role="tablist">
+            <button class="nav-tab active" data-tab="general" role="tab" aria-selected="true">
+                <span class="tab-icon">⚙️</span>
+                General
+            </button>
+            <button class="nav-tab" data-tab="ai" role="tab" aria-selected="false">
+                <span class="tab-icon">🧠</span>
+                AI Configuration
+            </button>
+            <button class="nav-tab" data-tab="google-cloud" role="tab" aria-selected="false">
+                <span class="tab-icon">☁️</span>
+                Google Cloud
+            </button>
+            <button class="nav-tab" data-tab="integrations" role="tab" aria-selected="false">
+                <span class="tab-icon">🔗</span>
+                Integrations
+            </button>
+            <button class="nav-tab" data-tab="privacy" role="tab" aria-selected="false">
+                <span class="tab-icon">🔒</span>
+                Privacy & Security
+            </button>
+            <button class="nav-tab" data-tab="about" role="tab" aria-selected="false">
+                <span class="tab-icon">ℹ️</span>
+                About
+            </button>
+        </nav>
+
+        <!-- Tab Content -->
+        <main class="content">
+            <!-- General Settings Tab -->
+            <div id="general" class="tab-content active" role="tabpanel">
+                <div class="section">
+                    <h2>General Settings</h2>
+                    <div class="setting-group">
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Default Theme</span>
+                                <select id="defaultTheme" class="select-input">
+                                    <option value="auto">Auto (System)</option>
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Widget Position</span>
+                                <select id="widgetPosition" class="select-input">
+                                    <option value="bottom-right">Bottom Right</option>
+                                    <option value="bottom-left">Bottom Left</option>
+                                    <option value="top-right">Top Right</option>
+                                    <option value="top-left">Top Left</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <span class="label-text">Enable Keyboard Shortcuts</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="enableShortcuts" checked>
+                                    <span class="slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <span class="label-text">Show Notifications</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="showNotifications" checked>
+                                    <span class="slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Auto-save Conversations</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="autoSaveConversations" checked>
+                                    <span class="slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Configuration Tab -->
+            <div id="ai" class="tab-content" role="tabpanel">
+                <div class="section">
+                    <h2>AI Configuration</h2>
+                    <div class="setting-group">
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Primary AI Provider</span>
+                                <select id="primaryProvider" class="select-input">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="google-vertex">Google Vertex AI</option>
+                                    <option value="anthropic">Anthropic Claude</option>
+                                    <option value="n8n">n8n Workflow</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="api-section" id="openaiSection">
+                            <h3>OpenAI Configuration</h3>
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span class="label-text">API Key</span>
+                                    <input type="password" id="openaiKey" class="text-input" placeholder="sk-...">
+                                </label>
+                                <button class="test-button" data-api="openai">Test Connection</button>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span class="label-text">Model</span>
+                                    <select id="openaiModel" class="select-input">
+                                        <option value="gpt-4">GPT-4</option>
+                                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="api-section" id="n8nSection">
+                            <h3>n8n Workflow Configuration</h3>
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span class="label-text">Webhook URL</span>
+                                    <input type="url" id="n8nWebhook" class="text-input" placeholder="https://your-n8n.com/webhook/...">
+                                </label>
+                                <button class="test-button" data-api="n8n">Test Connection</button>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span class="label-text">API Key (Optional)</span>
+                                    <input type="password" id="n8nKey" class="text-input" placeholder="Enter API key if required">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Cloud Tab -->
+            <div id="google-cloud" class="tab-content" role="tabpanel">
+                <div class="section">
+                    <h2>Google Cloud Platform</h2>
+                    <div class="setting-group">
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Project ID</span>
+                                <input type="text" id="gcpProjectId" class="text-input" placeholder="your-gcp-project-id">
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Location</span>
+                                <select id="gcpLocation" class="select-input">
+                                    <option value="us-central1">US Central 1</option>
+                                    <option value="us-east1">US East 1</option>
+                                    <option value="europe-west1">Europe West 1</option>
+                                    <option value="asia-southeast1">Asia Southeast 1</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="auth-methods">
+                            <h3>Authentication Method</h3>
+                            <div class="auth-tabs">
+                                <button class="auth-tab active" data-auth="oauth">OAuth 2.0</button>
+                                <button class="auth-tab" data-auth="service">Service Account</button>
+                                <button class="auth-tab" data-auth="api">API Key</button>
+                            </div>
+
+                            <div id="oauthAuth" class="auth-content active">
+                                <div class="setting-item">
+                                    <label class="setting-label">
+                                        <span class="label-text">Client ID</span>
+                                        <input type="text" id="gcpClientId" class="text-input" placeholder="your-client-id.googleusercontent.com">
+                                    </label>
+                                </div>
+                                <button class="auth-button" id="authorizeGCP">Authorize Google Cloud</button>
+                            </div>
+
+                            <div id="serviceAuth" class="auth-content">
+                                <div class="setting-item">
+                                    <label class="setting-label">
+                                        <span class="label-text">Service Account Key (JSON)</span>
+                                        <textarea id="serviceAccountKey" class="textarea-input" rows="6" placeholder="Paste your service account JSON here..."></textarea>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="apiAuth" class="auth-content">
+                                <div class="setting-item">
+                                    <label class="setting-label">
+                                        <span class="label-text">API Key</span>
+                                        <input type="password" id="gcpApiKey" class="text-input" placeholder="Enter your Google Cloud API key">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="service-toggles">
+                            <h3>Enabled Services</h3>
+                            <div class="service-grid">
+                                <label class="service-toggle">
+                                    <input type="checkbox" id="enableVertexAI" checked>
+                                    <span class="service-name">Vertex AI</span>
+                                </label>
+                                <label class="service-toggle">
+                                    <input type="checkbox" id="enableDocumentAI">
+                                    <span class="service-name">Document AI</span>
+                                </label>
+                                <label class="service-toggle">
+                                    <input type="checkbox" id="enableTranslate">
+                                    <span class="service-name">Translation</span>
+                                </label>
+                                <label class="service-toggle">
+                                    <input type="checkbox" id="enableSpeech">
+                                    <span class="service-name">Speech</span>
+                                </label>
+                                <label class="service-toggle">
+                                    <input type="checkbox" id="enableAnalytics">
+                                    <span class="service-name">Analytics</span>
+                                </label>
+                                <label class="service-toggle">
+                                    <input type="checkbox" id="enableBigQuery">
+                                    <span class="service-name">BigQuery</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="test-button" id="testGCPConnection">Test Google Cloud Connection</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integrations Tab -->
+            <div id="integrations" class="tab-content" role="tabpanel">
+                <div class="section">
+                    <h2>Third-party Integrations</h2>
+                    <div class="integration-grid">
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <span class="integration-icon">📝</span>
+                                <h3>Notion</h3>
+                                <div class="status-badge disconnected">Disconnected</div>
+                            </div>
+                            <p>Sync AI responses to Notion pages</p>
+                            <button class="connect-button">Connect Notion</button>
+                        </div>
+
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <span class="integration-icon">📊</span>
+                                <h3>Google Sheets</h3>
+                                <div class="status-badge connected">Connected</div>
+                            </div>
+                            <p>Export data and responses to spreadsheets</p>
+                            <button class="connect-button connected">Manage</button>
+                        </div>
+
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <span class="integration-icon">📧</span>
+                                <h3>Gmail</h3>
+                                <div class="status-badge disconnected">Disconnected</div>
+                            </div>
+                            <p>AI-powered email assistance</p>
+                            <button class="connect-button">Connect Gmail</button>
+                        </div>
+
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <span class="integration-icon">💬</span>
+                                <h3>Slack</h3>
+                                <div class="status-badge disconnected">Disconnected</div>
+                            </div>
+                            <p>Share AI insights in Slack channels</p>
+                            <button class="connect-button">Connect Slack</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Security Tab -->
+            <div id="privacy" class="tab-content" role="tabpanel">
+                <div class="section">
+                    <h2>Privacy & Security</h2>
+                    <div class="setting-group">
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <span class="label-text">Store conversation history locally only</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="localStorageOnly" checked>
+                                    <span class="slider"></span>
+                                </div>
+                            </label>
+                            <p class="setting-description">When enabled, conversations are never sent to external servers for storage</p>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span class="label-text">Data retention period</span>
+                                <select id="dataRetention" class="select-input">
+                                    <option value="7">7 days</option>
+                                    <option value="30" selected>30 days</option>
+                                    <option value="90">90 days</option>
+                                    <option value="365">1 year</option>
+                                    <option value="forever">Forever</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <span class="label-text">Anonymous usage analytics</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="anonymousAnalytics">
+                                    <span class="slider"></span>
+                                </div>
+                            </label>
+                            <p class="setting-description">Help improve the extension by sharing anonymous usage data</p>
+                        </div>
+
+                        <div class="danger-zone">
+                            <h3>Danger Zone</h3>
+                            <button class="danger-button" id="clearAllData">Clear All Data</button>
+                            <button class="danger-button" id="resetSettings">Reset to Defaults</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Tab -->
+            <div id="about" class="tab-content" role="tabpanel">
+                <div class="section">
+                    <div class="about-content">
+                        <div class="about-header">
+                            <div class="about-logo">🤖</div>
+                            <h2>AI Assistant Pro</h2>
+                            <p class="version">Version 2.0.0</p>
+                        </div>
+
+                        <div class="about-description">
+                            <p>A powerful Chrome extension that brings advanced AI capabilities directly to your browser.
+                            Featuring Google Cloud integration, multiple AI providers, and seamless workflow automation.</p>
+                        </div>
+
+                        <div class="features-list">
+                            <h3>Key Features</h3>
+                            <ul>
+                                <li>🧠 Multiple AI providers (OpenAI, Google Vertex AI, Anthropic)</li>
+                                <li>☁️ Complete Google Cloud Platform integration</li>
+                                <li>🔄 n8n workflow automation</li>
+                                <li>🎨 Modern, accessible UI/UX</li>
+                                <li>🔒 Privacy-focused design</li>
+                                <li>⚡ Real-time AI assistance</li>
+                            </ul>
+                        </div>
+
+                        <div class="links-section">
+                            <h3>Links</h3>
+                            <div class="link-buttons">
+                                <a href="#" class="link-button">📖 Documentation</a>
+                                <a href="#" class="link-button">🐛 Report Issues</a>
+                                <a href="#" class="link-button">⭐ Rate Extension</a>
+                                <a href="#" class="link-button">💬 Community</a>
+                            </div>
+                        </div>
+
+                        <div class="copyright">
+                            <p>&copy; 2024 AI Assistant Pro. Built with ❤️ for productivity.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="save-status" id="saveStatus">
+                    <span class="status-icon">💾</span>
+                    <span class="status-text">Settings saved automatically</span>
+                </div>
+                <div class="footer-actions">
+                    <button class="secondary-button" id="exportSettings">Export Settings</button>
+                    <button class="secondary-button" id="importSettings">Import Settings</button>
+                    <button class="primary-button" id="saveSettings">Save All</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Connection Status Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Connection Test</h3>
+                <button class="close-button" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="status-indicator" id="statusIndicator">
+                    <div class="spinner"></div>
+                    <p id="statusMessage">Testing connection...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import File Input -->
+    <input type="file" id="importFile" accept=".json" style="display: none;">
+
+    <script src="options-premium.js"></script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium AI Assistant</title>
+    <link rel="stylesheet" href="popup-premium.css">
+</head>
+<body>
+    <div class="popup-container" data-theme="light">
+        <!-- Header -->
+        <header class="popup-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-gradient">
+                        <div class="logo-icon">🤖</div>
+                    </div>
+                    <div class="logo-text">
+                        <h1 class="app-title">AI Assistant</h1>
+                        <div class="app-subtitle">Premium Experience</div>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator">
+                    <div class="status-dot online" id="connectionStatus"></div>
+                    <span class="status-text" id="statusText">Ready</span>
+                </div>
+                <button class="header-btn theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark/light theme">
+                    <svg class="theme-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" data-tab="chat" title="Chat with AI">
+                <span class="tab-icon">💬</span>
+                <span class="tab-label">Chat</span>
+            </button>
+            <button class="tab-btn" data-tab="tools" title="AI Tools">
+                <span class="tab-icon">🛠️</span>
+                <span class="tab-label">Tools</span>
+            </button>
+            <button class="tab-btn" data-tab="history" title="Chat History">
+                <span class="tab-icon">📜</span>
+                <span class="tab-label">History</span>
+                <span class="tab-badge" id="historyBadge">3</span>
+            </button>
+            <button class="tab-btn" data-tab="settings" title="Settings">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-label">Settings</span>
+            </button>
+        </nav>
+
+        <!-- Tab Content -->
+        <main class="tab-content">
+            <!-- Chat Tab -->
+            <section class="tab-pane active" id="chat-tab">
+                <!-- Model Selector -->
+                <div class="model-selector-container">
+                    <label class="model-label">AI Model:</label>
+                    <div class="model-selector">
+                        <select class="model-dropdown" id="modelSelect">
+                            <optgroup label="🧠 Google Cloud AI">
+                                <option value="vertex-palm">Vertex AI PaLM 2</option>
+                                <option value="vertex-codey">Vertex AI Codey</option>
+                                <option value="vertex-gemini">Vertex AI Gemini Pro</option>
+                            </optgroup>
+                            <optgroup label="🤖 OpenAI">
+                                <option value="gpt-4o" selected>GPT-4o</option>
+                                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </optgroup>
+                            <optgroup label="🔮 Google">
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                            </optgroup>
+                            <optgroup label="🎭 Anthropic">
+                                <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                <option value="claude-3.5-haiku">Claude 3.5 Haiku</option>
+                            </optgroup>
+                        </select>
+                        <div class="model-indicator" id="modelIndicator">
+                            <div class="model-status active"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="quick-action" data-action="summarize" title="Summarize current page">
+                        <span class="action-icon">📄</span>
+                        <span class="action-label">Summarize Page</span>
+                    </button>
+                    <button class="quick-action" data-action="translate" title="Translate selected text">
+                        <span class="action-icon">🌍</span>
+                        <span class="action-label">Translate</span>
+                    </button>
+                    <button class="quick-action" data-action="explain" title="Explain selected content">
+                        <span class="action-icon">💡</span>
+                        <span class="action-label">Explain</span>
+                    </button>
+                    <button class="quick-action" data-action="analyze" title="Analyze page content">
+                        <span class="action-icon">📊</span>
+                        <span class="action-label">Analyze</span>
+                    </button>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Welcome Message -->
+                    <div class="message-container welcome-message">
+                        <div class="message-content">
+                            <div class="welcome-icon">👋</div>
+                            <h3 class="welcome-title">Hello! I'm your AI Assistant</h3>
+                            <p class="welcome-text">I can help you with various tasks. Try asking me questions or use the quick actions above!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <div class="typing-avatar">🤖</div>
+                    <div class="typing-bubble">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <div class="input-container">
+                        <textarea class="message-input"
+                                  id="messageInput"
+                                  placeholder="Type your message here..."
+                                  rows="1"
+                                  maxlength="2000"></textarea>
+                        <div class="input-actions">
+                            <button class="input-btn voice-btn" id="voiceBtn" title="Voice input" aria-label="Start voice input">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+                                </svg>
+                            </button>
+                            <button class="input-btn attach-btn" id="attachBtn" title="Attach file" aria-label="Attach file">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                                </svg>
+                            </button>
+                            <button class="input-btn send-btn" id="sendBtn" title="Send message" aria-label="Send message">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-footer">
+                        <div class="char-counter">
+                            <span id="charCount">0</span>/2000
+                        </div>
+                        <div class="input-shortcuts">
+                            <kbd>⌘</kbd>+<kbd>Enter</kbd> to send
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tools Tab -->
+            <section class="tab-pane" id="tools-tab">
+                <div class="tools-grid">
+                    <div class="tool-category">
+                        <h3 class="category-title">
+                            <span class="category-icon">🧠</span>
+                            AI Intelligence
+                        </h3>
+                        <div class="tool-items">
+                            <button class="tool-item" data-tool="vertex-ai">
+                                <div class="tool-icon">🚀</div>
+                                <div class="tool-content">
+                                    <h4 class="tool-name">Vertex AI</h4>
+                                    <p class="tool-description">Advanced AI with PaLM models</p>
+                                </div>
+                                <div class="tool-status available"></div>
+                            </button>
+                            <button class="tool-item" data-tool="document-ai">
+                                <div class="tool-icon">📄</div>
+                                <div class="tool-content">
+                                    <h4 class="tool-name">Document AI</h4>
+                                    <p class="tool-description">OCR and document processing</p>
+                                </div>
+                                <div class="tool-status available"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-category">
+                        <h3 class="category-title">
+                            <span class="category-icon">🌐</span>
+                            Language & Speech
+                        </h3>
+                        <div class="tool-items">
+                            <button class="tool-item" data-tool="translate">
+                                <div class="tool-icon">🌍</div>
+                                <div class="tool-content">
+                                    <h4 class="tool-name">Translation</h4>
+                                    <p class="tool-description">Multi-language support</p>
+                                </div>
+                                <div class="tool-status available"></div>
+                            </button>
+                            <button class="tool-item" data-tool="speech">
+                                <div class="tool-icon">🎤</div>
+                                <div class="tool-content">
+                                    <h4 class="tool-name">Speech Services</h4>
+                                    <p class="tool-description">Voice recognition & synthesis</p>
+                                </div>
+                                <div class="tool-status available"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-category">
+                        <h3 class="category-title">
+                            <span class="category-icon">📊</span>
+                            Analytics & Data
+                        </h3>
+                        <div class="tool-items">
+                            <button class="tool-item" data-tool="analytics">
+                                <div class="tool-icon">📈</div>
+                                <div class="tool-content">
+                                    <h4 class="tool-name">Analytics</h4>
+                                    <p class="tool-description">Google Analytics integration</p>
+                                </div>
+                                <div class="tool-status available"></div>
+                            </button>
+                            <button class="tool-item" data-tool="bigquery">
+                                <div class="tool-icon">💾</div>
+                                <div class="tool-content">
+                                    <h4 class="tool-name">BigQuery</h4>
+                                    <p class="tool-description">Big data processing</p>
+                                </div>
+                                <div class="tool-status available"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Tab -->
+            <section class="tab-pane" id="history-tab">
+                <div class="history-header">
+                    <h3 class="history-title">Recent Conversations</h3>
+                    <button class="clear-history-btn" id="clearHistory" title="Clear all history">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- History items will be populated dynamically -->
+                    <div class="history-item">
+                        <div class="history-preview">
+                            <div class="history-title">How to implement OAuth 2.0?</div>
+                            <div class="history-snippet">OAuth 2.0 is an authorization framework...</div>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-time">2 hours ago</span>
+                            <span class="history-messages">5 messages</span>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-preview">
+                            <div class="history-title">Explain quantum computing</div>
+                            <div class="history-snippet">Quantum computing uses quantum mechanics...</div>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-time">1 day ago</span>
+                            <span class="history-messages">3 messages</span>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-preview">
+                            <div class="history-title">JavaScript best practices</div>
+                            <div class="history-snippet">Here are some essential JavaScript...</div>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-time">3 days ago</span>
+                            <span class="history-messages">8 messages</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section class="tab-pane" id="settings-tab">
+                <div class="settings-content">
+                    <!-- General Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-title">
+                            <span class="settings-icon">⚙️</span>
+                            General
+                        </h3>
+                        <div class="settings-items">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Theme</label>
+                                    <span class="setting-description">Choose your preferred color scheme</span>
+                                </div>
+                                <select class="setting-control" id="themeSelect">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Default AI Model</label>
+                                    <span class="setting-description">Select your preferred AI model</span>
+                                </div>
+                                <select class="setting-control" id="defaultModelSelect">
+                                    <option value="gpt-4o">GPT-4o</option>
+                                    <option value="vertex-palm">Vertex AI PaLM</option>
+                                    <option value="gemini-2.0-flash">Gemini 2.0</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Voice Commands</label>
+                                    <span class="setting-description">Enable voice input and output</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="voiceEnabled" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Google Cloud Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-title">
+                            <span class="settings-icon">☁️</span>
+                            Google Cloud
+                        </h3>
+                        <div class="settings-items">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Project ID</label>
+                                    <span class="setting-description">Your Google Cloud Project ID</span>
+                                </div>
+                                <input type="text" class="setting-control" id="projectId" placeholder="your-project-id">
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Location</label>
+                                    <span class="setting-description">Default location for services</span>
+                                </div>
+                                <select class="setting-control" id="locationSelect">
+                                    <option value="us-central1">US Central</option>
+                                    <option value="us-east1">US East</option>
+                                    <option value="europe-west1">Europe West</option>
+                                    <option value="asia-southeast1">Asia Southeast</option>
+                                </select>
+                            </div>
+                            <div class="setting-item full-width">
+                                <button class="test-connection-btn" id="testConnection">
+                                    <span class="btn-icon">🔗</span>
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-title">
+                            <span class="settings-icon">🔒</span>
+                            Privacy
+                        </h3>
+                        <div class="settings-items">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Save Chat History</label>
+                                    <span class="setting-description">Store conversations locally</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="saveHistory" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">Analytics</label>
+                                    <span class="setting-description">Help improve the service</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="analytics" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="settings-footer">
+                    <button class="footer-btn secondary" id="resetSettings">Reset to Defaults</button>
+                    <button class="footer-btn primary" id="openFullOptions">Open Full Settings</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Processing...</div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script src="popup-premium.js"></script>
+</body>
+</html>
