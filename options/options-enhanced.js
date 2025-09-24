@@ -183,6 +183,67 @@ function setupEventListeners() {
     }
 }
 
+// Save settings to storage
+async function saveSettings() {
+    try {
+        // Gather all settings from UI
+        const newSettings = {
+            // General
+            assistantName: document.getElementById('assistantName')?.value || 'n8n AI Assistant',
+            enableAssistant: document.getElementById('enableAssistant')?.checked !== false,
+            autoStartChat: document.getElementById('autoStartChat')?.checked || false,
+            defaultModel: document.getElementById('defaultModel')?.value || 'gpt-3.5-turbo',
+
+            // API Keys
+            openaiKey: document.getElementById('openaiKey')?.value || '',
+            n8nApiKey: document.getElementById('n8nApiKey')?.value || '',
+            context7ApiKey: document.getElementById('context7ApiKey')?.value || '',
+
+            // Connections
+            n8nWebhookUrl: document.getElementById('n8nWebhookUrl')?.value || '',
+            integrationServer: document.getElementById('integrationServer')?.value || '',
+            customEndpoint: document.getElementById('customEndpoint')?.value || '',
+
+            // Appearance
+            theme: document.getElementById('theme')?.value || 'auto',
+            widgetPosition: document.getElementById('widgetPosition')?.value || 'bottom-right',
+            widgetSize: document.getElementById('widgetSize')?.value || 'medium',
+            enableAnimations: document.getElementById('enableAnimations')?.checked !== false,
+            compactMode: document.getElementById('compactMode')?.checked || false,
+
+            // Advanced
+            systemPrompt: document.getElementById('systemPrompt')?.value || '',
+            maxTokens: parseInt(document.getElementById('maxTokens')?.value) || 2000,
+            temperature: parseFloat(document.getElementById('temperature')?.value) || 0.7,
+            debugMode: document.getElementById('debugMode')?.checked || false
+        };
+
+        // Save to Chrome storage
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+            await chrome.storage.sync.set(newSettings);
+            console.log('Settings saved to Chrome storage');
+        } else {
+            // Fallback to localStorage
+            localStorage.setItem('settings', JSON.stringify(newSettings));
+            console.log('Settings saved to localStorage');
+        }
+
+        // Update local settings object
+        settings = newSettings;
+        hasUnsavedChanges = false;
+
+        // Show success message
+        showMessage('Settings saved successfully!', 'success');
+
+        // Update connection statuses
+        updateConnectionStatuses();
+
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showMessage('Failed to save settings: ' + error.message, 'error');
+    }
+}
+
 // Setup navigation
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
