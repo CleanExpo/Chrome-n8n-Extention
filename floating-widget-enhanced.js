@@ -773,6 +773,9 @@ class FloatingAssistant {
                         <button id="n8n-dock" class="n8n-dock-btn" aria-label="Dock to side" data-tooltip="Dock to side">
                             📌
                         </button>
+                        <button id="n8n-minimize" class="n8n-minimize-btn" aria-label="Minimize" data-tooltip="Minimize">
+                            ➖
+                        </button>
                         <button id="n8n-maximize" class="n8n-maximize-btn" aria-label="Maximize" data-tooltip="Maximize">
                             🔳
                         </button>
@@ -848,11 +851,20 @@ class FloatingAssistant {
         document.body.appendChild(container);
         this.container = container;
 
-        // Set initial position
+        // Set initial position from saved preferences
         const toggle = document.getElementById('n8n-widget-toggle');
-        if (toggle) {
-            toggle.style.bottom = '20px';
-            toggle.style.right = '20px';
+        const window = document.getElementById('n8n-chat-window');
+
+        if (toggle && !this.isDocked) {
+            toggle.style.left = `${this.position.x}px`;
+            toggle.style.top = `${this.position.y}px`;
+            toggle.style.right = 'auto';
+            toggle.style.bottom = 'auto';
+        }
+
+        if (window && !this.isDocked) {
+            window.style.width = `${this.windowSize.width}px`;
+            window.style.height = `${this.windowSize.height}px`;
         }
 
         // Apply docked mode if saved
@@ -929,6 +941,7 @@ class FloatingAssistant {
         const sendBtn = document.getElementById('n8n-send');
         const input = document.getElementById('n8n-input');
         const maximizeBtn = document.getElementById('n8n-maximize');
+        const minimizeBtn = document.getElementById('n8n-minimize');
         const dockBtn = document.getElementById('n8n-dock');
         const attachBtn = document.getElementById('n8n-attach');
         const screenshotBtn = document.getElementById('n8n-screenshot');
@@ -962,6 +975,10 @@ class FloatingAssistant {
 
         if (maximizeBtn) {
             maximizeBtn.addEventListener('click', () => this.maximizeChat());
+        }
+
+        if (minimizeBtn) {
+            minimizeBtn.addEventListener('click', () => this.minimizeChat());
         }
 
         if (dockBtn) {
@@ -1031,7 +1048,25 @@ class FloatingAssistant {
     }
 
     minimizeChat() {
-        this.toggleChat();
+        // Close the chat window and show only the toggle button
+        this.isOpen = false;
+        const window = document.getElementById('n8n-chat-window');
+        const toggle = document.getElementById('n8n-widget-toggle');
+
+        if (window) {
+            window.style.display = 'none';
+        }
+
+        if (toggle) {
+            toggle.style.display = 'flex';
+            // Add a subtle animation to indicate it was minimized
+            toggle.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                toggle.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        this.saveCurrentPosition();
     }
 
     maximizeChat() {
@@ -1152,6 +1187,8 @@ class FloatingAssistant {
             this.isDragging = false;
             document.removeEventListener('mousemove', handleDrag);
             document.removeEventListener('mouseup', stopDrag);
+            // Save the new position
+            this.saveCurrentPosition();
         };
     }
 
@@ -1426,10 +1463,35 @@ class FloatingAssistant {
         return div.innerHTML;
     }
 
+    saveCurrentPosition() {
+        const toggle = document.getElementById('n8n-widget-toggle');
+        const window = document.getElementById('n8n-chat-window');
+
+        if (toggle && !this.isDocked) {
+            const rect = toggle.getBoundingClientRect();
+            this.position = {
+                x: rect.left,
+                y: rect.top
+            };
+        }
+
+        if (window && !this.isDocked && !this.isMaximized) {
+            const rect = window.getBoundingClientRect();
+            this.windowSize = {
+                width: rect.width,
+                height: rect.height
+            };
+        }
+
+        this.savePreferences();
+    }
+
     savePreferences() {
         const prefs = {
             assistantDocked: this.isDocked,
-            dockedWidth: this.dockedWidth
+            dockedWidth: this.dockedWidth,
+            position: this.position,
+            windowSize: this.windowSize
         };
 
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
@@ -1438,6 +1500,8 @@ class FloatingAssistant {
             try {
                 localStorage.setItem('assistantDocked', this.isDocked);
                 localStorage.setItem('dockedWidth', this.dockedWidth);
+                localStorage.setItem('assistantPosition', JSON.stringify(this.position));
+                localStorage.setItem('assistantWindowSize', JSON.stringify(this.windowSize));
             } catch (e) {
                 console.log('Could not save preferences');
             }
@@ -1529,15 +1593,27 @@ class FloatingAssistant {
     async loadPreferences() {
         return new Promise((resolve) => {
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-                chrome.storage.sync.get(['assistantDocked', 'dockedWidth'], (result) => {
+                chrome.storage.sync.get(['assistantDocked', 'dockedWidth', 'position', 'windowSize'], (result) => {
                     this.isDocked = result.assistantDocked || false;
                     this.dockedWidth = result.dockedWidth || 400;
+                    this.position = result.position || { x: window.innerWidth - 80, y: window.innerHeight - 100 };
+                    this.windowSize = result.windowSize || { width: 380, height: 500 };
                     resolve();
                 });
             } else {
                 try {
                     this.isDocked = localStorage.getItem('assistantDocked') === 'true';
                     this.dockedWidth = parseInt(localStorage.getItem('dockedWidth') || '400');
+
+                    const savedPosition = localStorage.getItem('assistantPosition');
+                    if (savedPosition) {
+                        this.position = JSON.parse(savedPosition);
+                    }
+
+                    const savedWindowSize = localStorage.getItem('assistantWindowSize');
+                    if (savedWindowSize) {
+                        this.windowSize = JSON.parse(savedWindowSize);
+                    }
                 } catch (e) {
                     console.log('Storage not available, using defaults');
                 }
