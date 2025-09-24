@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Widget Debug Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .check-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f1f3f5;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .check-status {
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 AI Assistant Widget Debug Tool</h1>
+
+        <!-- Status Checks -->
+        <div class="test-section">
+            <h2>📊 Status Checks</h2>
+
+            <div class="check-item">
+                <span>Extension Installed:</span>
+                <span id="extensionStatus" class="check-status">Checking...</span>
+            </div>
+
+            <div class="check-item">
+                <span>Background Script:</span>
+                <span id="backgroundStatus" class="check-status">Checking...</span>
+            </div>
+
+            <div class="check-item">
+                <span>Content Script Injected:</span>
+                <span id="contentStatus" class="check-status">Checking...</span>
+            </div>
+
+            <div class="check-item">
+                <span>Widget Button Visible:</span>
+                <span id="widgetStatus" class="check-status">Checking...</span>
+            </div>
+
+            <div class="check-item">
+                <span>API Keys Configured:</span>
+                <span id="apiStatus" class="check-status">Checking...</span>
+            </div>
+
+            <button onclick="runAllChecks()">Run All Checks</button>
+            <button onclick="checkConsole()">Check Console Logs</button>
+        </div>
+
+        <!-- Test Communication -->
+        <div class="test-section">
+            <h2>📡 Test Communication</h2>
+
+            <button onclick="testBackground()">Test Background Script</button>
+            <button onclick="testContentScript()">Test Content Script</button>
+            <button onclick="testMessagePassing()">Test Message Passing</button>
+            <button onclick="sendTestMessage()">Send Test Message to AI</button>
+
+            <input type="text" id="testMessage" placeholder="Enter test message" value="Hello, are you working?">
+
+            <div id="commResult" class="status info" style="display: none;"></div>
+        </div>
+
+        <!-- Manual Injection -->
+        <div class="test-section">
+            <h2>🔧 Manual Controls</h2>
+
+            <button onclick="injectWidget()">Manually Inject Widget</button>
+            <button onclick="removeWidget()">Remove Widget</button>
+            <button onclick="reloadExtension()">Reload Extension</button>
+            <button onclick="clearStorage()">Clear Storage</button>
+
+            <div id="manualResult" class="status info" style="display: none;"></div>
+        </div>
+
+        <!-- Console Output -->
+        <div class="test-section">
+            <h2>📝 Console Output</h2>
+            <div id="console" class="log-container">
+                Console messages will appear here...
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="test-section">
+            <h2>🐛 Debug Information</h2>
+            <pre id="debugInfo">Loading debug information...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Log to console display
+        function log(message, type = 'info') {
+            const consoleEl = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = {
+                'info': '#61afef',
+                'success': '#98c379',
+                'error': '#e06c75',
+                'warning': '#e5c07b'
+            }[type];
+
+            consoleEl.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            console.log(`[${type}] ${message}`);
+        }
+
+        // Check extension installation
+        async function checkExtension() {
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'ping' });
+                if (response?.pong) {
+                    updateStatus('extensionStatus', '✅ Installed', 'success');
+                    log('Extension is installed and responding', 'success');
+                    return true;
+                }
+            } catch (error) {
+                updateStatus('extensionStatus', '❌ Not Found', 'error');
+                log('Extension not found: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Check background script
+        async function checkBackground() {
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'getStatus' });
+                if (response?.connected) {
+                    updateStatus('backgroundStatus', '✅ Connected', 'success');
+                    log('Background script is active', 'success');
+
+                    // Check API status
+                    const apis = [];
+                    if (response.apiStatus?.openai) apis.push('OpenAI');
+                    if (response.apiStatus?.google) apis.push('Google');
+                    if (response.apiStatus?.anthropic) apis.push('Anthropic');
+                    if (response.apiStatus?.n8n) apis.push('n8n');
+
+                    updateStatus('apiStatus', apis.length > 0 ? `✅ ${apis.join(', ')}` : '❌ None',
+                                apis.length > 0 ? 'success' : 'error');
+
+                    return response;
+                } else {
+                    updateStatus('backgroundStatus', '⚠️ Not Connected', 'warning');
+                    log('Background script not connected', 'warning');
+                }
+            } catch (error) {
+                updateStatus('backgroundStatus', '❌ Error', 'error');
+                log('Background script error: ' + error.message, 'error');
+            }
+        }
+
+        // Check content script
+        function checkContentScript() {
+            // Check if content script added its marker
+            if (window.__aiAssistantLoaded) {
+                updateStatus('contentStatus', '✅ Loaded', 'success');
+                log('Content script is loaded', 'success');
+                return true;
+            } else {
+                updateStatus('contentStatus', '❌ Not Loaded', 'error');
+                log('Content script not detected', 'error');
+                return false;
+            }
+        }
+
+        // Check widget
+        function checkWidget() {
+            const widget = document.getElementById('ai-assistant-button');
+            if (widget) {
+                updateStatus('widgetStatus', '✅ Visible', 'success');
+                log('Widget button found', 'success');
+                return true;
+            } else {
+                updateStatus('widgetStatus', '❌ Not Found', 'error');
+                log('Widget button not found', 'error');
+                return false;
+            }
+        }
+
+        // Run all checks
+        async function runAllChecks() {
+            log('Running all checks...', 'info');
+
+            await checkExtension();
+            await checkBackground();
+            checkContentScript();
+            checkWidget();
+
+            // Get debug info
+            const debugInfo = await getDebugInfo();
+            document.getElementById('debugInfo').textContent = JSON.stringify(debugInfo, null, 2);
+        }
+
+        // Test background communication
+        async function testBackground() {
+            log('Testing background script...', 'info');
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'ping' });
+                showResult('commResult', `Background response: ${JSON.stringify(response)}`, 'success');
+            } catch (error) {
+                showResult('commResult', `Background error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test content script
+        function testContentScript() {
+            log('Testing content script...', 'info');
+
+            // Try to call a content script function
+            if (typeof window.testConnection === 'function') {
+                window.testConnection();
+                showResult('commResult', 'Content script function called', 'success');
+            } else {
+                showResult('commResult', 'Content script functions not accessible', 'warning');
+            }
+        }
+
+        // Test message passing
+        async function testMessagePassing() {
+            log('Testing message passing...', 'info');
+
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'sendMessage',
+                    message: 'Test message',
+                    context: {
+                        url: window.location.href,
+                        title: document.title,
+                        test: true
+                    }
+                });
+
+                showResult('commResult', `Message response: ${JSON.stringify(response)}`, 'success');
+            } catch (error) {
+                showResult('commResult', `Message error: ${error.message}`, 'error');
+            }
+        }
+
+        // Send test message
+        async function sendTestMessage() {
+            const message = document.getElementById('testMessage').value;
+            log(`Sending test message: "${message}"`, 'info');
+
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'sendMessage',
+                    message: message,
+                    context: {
+                        url: window.location.href,
+                        title: document.title
+                    }
+                });
+
+                if (response?.success && response?.reply) {
+                    showResult('commResult', `AI Response: ${response.reply}`, 'success');
+                } else {
+                    showResult('commResult', `No reply received: ${JSON.stringify(response)}`, 'error');
+                }
+            } catch (error) {
+                showResult('commResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Manually inject widget
+        function injectWidget() {
+            log('Manually injecting widget...', 'info');
+
+            // Create and inject the widget button
+            const button = document.createElement('div');
+            button.id = 'ai-assistant-button';
+            button.innerHTML = '🤖';
+            button.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 30px;
+                cursor: pointer;
+                z-index: 999999;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            `;
+
+            button.onclick = () => alert('Widget clicked! If chat doesn\'t open, there\'s a communication issue.');
+
+            document.body.appendChild(button);
+            showResult('manualResult', 'Widget injected manually', 'success');
+            checkWidget();
+        }
+
+        // Remove widget
+        function removeWidget() {
+            const widget = document.getElementById('ai-assistant-button');
+            const chat = document.getElementById('ai-assistant-chat');
+
+            if (widget) widget.remove();
+            if (chat) chat.remove();
+
+            showResult('manualResult', 'Widget removed', 'success');
+            checkWidget();
+        }
+
+        // Reload extension
+        function reloadExtension() {
+            log('Reloading extension...', 'info');
+            chrome.runtime.reload();
+            setTimeout(() => window.location.reload(), 1000);
+        }
+
+        // Clear storage
+        async function clearStorage() {
+            if (confirm('Clear all extension storage?')) {
+                chrome.storage.sync.clear();
+                chrome.storage.local.clear();
+                showResult('manualResult', 'Storage cleared', 'success');
+                log('Storage cleared', 'success');
+            }
+        }
+
+        // Check console
+        function checkConsole() {
+            // Override console.log to capture messages
+            const originalLog = console.log;
+            console.log = function(...args) {
+                log('Console: ' + args.join(' '), 'info');
+                originalLog.apply(console, args);
+            };
+
+            log('Console capture enabled', 'success');
+        }
+
+        // Get debug info
+        async function getDebugInfo() {
+            const info = {
+                url: window.location.href,
+                contentScriptLoaded: !!window.__aiAssistantLoaded,
+                widgetExists: !!document.getElementById('ai-assistant-button'),
+                chatExists: !!document.getElementById('ai-assistant-chat'),
+                chromeAvailable: typeof chrome !== 'undefined',
+                runtimeAvailable: typeof chrome?.runtime !== 'undefined'
+            };
+
+            try {
+                const status = await chrome.runtime.sendMessage({ action: 'getStatus' });
+                info.extensionStatus = status;
+            } catch (error) {
+                info.extensionError = error.message;
+            }
+
+            return info;
+        }
+
+        // Helper functions
+        function updateStatus(id, text, type) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = text;
+                element.className = 'check-status ' + type;
+            }
+        }
+
+        function showResult(id, text, type) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = text;
+                element.className = 'status ' + type;
+                element.style.display = 'block';
+                log(text, type === 'error' ? 'error' : 'success');
+            }
+        }
+
+        // Run checks on load
+        window.addEventListener('load', () => {
+            log('Debug page loaded', 'info');
+            setTimeout(runAllChecks, 500);
+        });
+    </script>
+</body>
+</html>

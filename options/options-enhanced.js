@@ -235,7 +235,17 @@ async function saveSettings() {
         // Save to Chrome storage
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
             await chrome.storage.sync.set(newSettings);
-            console.log('Settings saved to Chrome storage');
+            console.log('Settings saved to Chrome storage:', newSettings);
+
+            // Notify background script of the changes
+            chrome.runtime.sendMessage({
+                action: 'saveSettings',
+                settings: newSettings
+            }, (response) => {
+                if (response?.success) {
+                    console.log('Background script updated');
+                }
+            });
         } else {
             // Fallback to localStorage
             localStorage.setItem('settings', JSON.stringify(newSettings));
@@ -304,6 +314,8 @@ async function saveSettings() {
 
         // API Keys
         openaiKey: document.getElementById('openaiKey')?.value || '',
+        googleApiKey: document.getElementById('googleApiKey')?.value || '',
+        anthropicKey: document.getElementById('anthropicKey')?.value || '',
         n8nApiKey: document.getElementById('n8nApiKey')?.value || '',
         context7ApiKey: document.getElementById('context7ApiKey')?.value || '',
 

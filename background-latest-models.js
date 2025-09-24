@@ -91,8 +91,28 @@ async function handleMessage(request, sender, sendResponse) {
                 break;
 
             case 'sendMessage':
-                const reply = await processAIMessage(request.message, request.context);
+                const reply = await processAIMessage(request.message, request.context, request.screenshot);
                 sendResponse({ success: true, reply });
+                break;
+
+            case 'captureVisibleTab':
+                try {
+                    // Get active tab
+                    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                    if (activeTab) {
+                        // Capture visible area
+                        const dataUrl = await chrome.tabs.captureVisibleTab(activeTab.windowId, {
+                            format: 'png',
+                            quality: 100
+                        });
+                        sendResponse({ success: true, dataUrl });
+                    } else {
+                        sendResponse({ success: false, error: 'No active tab found' });
+                    }
+                } catch (error) {
+                    console.error('Screenshot capture error:', error);
+                    sendResponse({ success: false, error: error.message });
+                }
                 break;
 
             case 'getStatus':
@@ -164,9 +184,12 @@ async function handleMessage(request, sender, sendResponse) {
     }
 }
 
-// Process AI messages with model selection
-async function processAIMessage(message, context) {
+// Process AI messages with model selection and screenshot support
+async function processAIMessage(message, context, screenshot = null) {
     console.log('Processing message with model:', state.settings.selectedModel);
+    if (screenshot) {
+        console.log('Processing with screenshot');
+    }
 
     // Reload settings to get latest
     const settings = await new Promise(resolve => {
@@ -175,7 +198,7 @@ async function processAIMessage(message, context) {
 
     state.settings = settings;
     const provider = settings.selectedProvider || 'openai';
-    const model = settings.selectedModel || 'gpt-4-turbo-preview';
+    const model = settings.selectedModel || 'gpt-4o-mini';
 
     console.log(`Using ${provider} with model ${model}`);
 
@@ -184,7 +207,7 @@ async function processAIMessage(message, context) {
         case 'openai':
             if (settings.openaiKey) {
                 try {
-                    return await callOpenAI(settings.openaiKey, message, model, context);
+                    return await callOpenAI(settings.openaiKey, message, model, context, screenshot);
                 } catch (error) {
                     console.error('OpenAI error:', error);
                     return `OpenAI Error: ${error.message}`;
@@ -195,7 +218,7 @@ async function processAIMessage(message, context) {
         case 'google':
             if (settings.googleApiKey) {
                 try {
-                    return await callGoogleGemini(settings.googleApiKey, message, model, context);
+                    return await callGoogleGemini(settings.googleApiKey, message, model, context, screenshot);
                 } catch (error) {
                     console.error('Google Gemini error:', error);
                     return `Google Gemini Error: ${error.message}`;
@@ -206,7 +229,7 @@ async function processAIMessage(message, context) {
         case 'anthropic':
             if (settings.anthropicKey) {
                 try {
-                    return await callClaude(settings.anthropicKey, message, model, context);
+                    return await callClaude(settings.anthropicKey, message, model, context, screenshot);
                 } catch (error) {
                     console.error('Claude error:', error);
                     return `Claude Error: ${error.message}`;
@@ -218,7 +241,7 @@ async function processAIMessage(message, context) {
     // Try n8n as fallback
     if (settings.n8nWebhookUrl) {
         try {
-            return await callN8n(settings.n8nWebhookUrl, settings.n8nApiKey, message, context);
+            return await callN8n(settings.n8nWebhookUrl, settings.n8nApiKey, message, context, screenshot);
         } catch (error) {
             console.log('n8n failed:', error.message);
         }
@@ -235,13 +258,36 @@ Available providers:
 Go to Settings → API Keys to set up.`;
 }
 
-// Call OpenAI with specific model
-async function callOpenAI(apiKey, message, model, context) {
+// Call OpenAI with specific model and screenshot support
+async function callOpenAI(apiKey, message, model, context, screenshot = null) {
     console.log(`Calling OpenAI API with model: ${model}`);
+    if (screenshot) {
+        console.log('Including screenshot in OpenAI request');
+    }
+
+    // Build user message content
+    let userContent = message;
+
+    // For vision-capable models with screenshot
+    if (screenshot && (model.includes('gpt-4o') || model === 'gpt-4-turbo' || model === 'gpt-4-turbo-preview')) {
+        userContent = [
+            {
+                type: 'text',
+                text: message
+            },
+            {
+                type: 'image_url',
+                image_url: {
+                    url: screenshot,
+                    detail: 'high'
+                }
+            }
+        ];
+    }
 
     // Prepare messages - o1 models don't use system messages
     const messages = model.includes('o1')
-        ? [{ role: 'user', content: message }]
+        ? [{ role: 'user', content: userContent }]
         : [
             {
                 role: 'system',
@@ -249,7 +295,7 @@ async function callOpenAI(apiKey, message, model, context) {
             },
             {
                 role: 'user',
-                content: message
+                content: userContent
             }
         ];
 
@@ -283,55 +329,125 @@ async function callOpenAI(apiKey, message, model, context) {
     return data.choices[0].message.content;
 }
 
-// Call Google Gemini API
-async function callGoogleGemini(apiKey, message, model, context) {
+// Call Google Gemini API with proper error handling
+async function callGoogleGemini(apiKey, message, model, context, screenshot = null) {
     console.log(`Calling Google Gemini API with model: ${model}`);
 
-    // Map model names to API endpoints
+    // Map model names to API endpoints - use correct endpoint formats
     let apiModel = model;
-    if (model === 'gemini-2.0-flash') {
-        apiModel = 'gemini-2.0-flash-exp'; // Use experimental endpoint for 2.0
-    } else if (model === 'gemini-1.5-pro') {
-        apiModel = 'gemini-1.5-pro-latest';
-    } else if (model === 'gemini-1.5-flash') {
-        apiModel = 'gemini-1.5-flash-latest';
+    const modelMapping = {
+        'gemini-2.0-flash': 'gemini-2.0-flash-exp', // Latest 2.0 experimental
+        'gemini-1.5-pro': 'gemini-1.5-pro-latest',
+        'gemini-1.5-flash': 'gemini-1.5-flash-latest',
+        'gemini-pro': 'gemini-pro',
+        'gemini-pro-vision': 'gemini-pro-vision'
+    };
+
+    if (modelMapping[model]) {
+        apiModel = modelMapping[model];
     }
 
-    // Gemini API endpoint
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`;
+    // Build content parts
+    const parts = [];
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+    // Add text part
+    parts.push({ text: message });
+
+    // Add screenshot if provided
+    if (screenshot) {
+        // Convert data URL to base64
+        const base64Data = screenshot.replace(/^data:image\/[^;]+;base64,/, '');
+        parts.push({
+            inline_data: {
+                mime_type: 'image/png',
+                data: base64Data
+            }
+        });
+    }
+
+    try {
+        // Gemini API endpoint - use v1beta for newer models
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`;
+
+        const requestBody = {
             contents: [{
-                parts: [{
-                    text: message
-                }]
+                parts: parts
             }],
             generationConfig: {
                 temperature: 0.7,
-                topK: 1,
-                topP: 1,
-                maxOutputTokens: model.includes('2.0') ? 8192 : 2048
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: model.includes('2.0') ? 8192 : 4096
             }
-        })
-    });
+        };
 
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Gemini API error: ${error}`);
+        // Add safety settings for better reliability
+        requestBody.safetySettings = [
+            {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_ONLY_HIGH"
+            },
+            {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_ONLY_HIGH"
+            },
+            {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_ONLY_HIGH"
+            },
+            {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_ONLY_HIGH"
+            }
+        ];
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+            console.error('Gemini API error response:', responseText);
+
+            // Parse error for better messaging
+            try {
+                const errorData = JSON.parse(responseText);
+                if (errorData.error?.message) {
+                    throw new Error(errorData.error.message);
+                }
+            } catch {
+                // If not JSON, use the raw text
+            }
+
+            throw new Error(`Gemini API error (${response.status}): ${responseText.substring(0, 200)}`);
+        }
+
+        const data = JSON.parse(responseText);
+
+        // Check for valid response
+        if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+            console.error('Invalid Gemini response structure:', data);
+            throw new Error('Invalid response from Gemini API');
+        }
+
+        return data.candidates[0].content.parts[0].text;
+    } catch (error) {
+        console.error('Google Gemini API error:', error);
+        throw error;
     }
-
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
 }
 
-// Call Anthropic Claude API
-async function callClaude(apiKey, message, model, context) {
+// Call Anthropic Claude API with screenshot support
+async function callClaude(apiKey, message, model, context, screenshot = null) {
     console.log(`Calling Claude API with model: ${model}`);
+    if (screenshot) {
+        console.log('Including screenshot in Claude request');
+    }
 
     // Map our model names to Anthropic's API model IDs
     let apiModel = model;
@@ -347,18 +463,44 @@ async function callClaude(apiKey, message, model, context) {
         apiModel = modelMapping[model];
     }
 
+    // Build message content
+    let messageContent = message;
+
+    // Add screenshot support for Claude 3 models
+    if (screenshot) {
+        // Convert data URL to base64
+        const base64Data = screenshot.replace(/^data:image\/[^;]+;base64,/, '');
+        const mimeType = screenshot.match(/^data:(image\/[^;]+);base64,/)?.[1] || 'image/png';
+
+        messageContent = [
+            {
+                type: 'image',
+                source: {
+                    type: 'base64',
+                    media_type: mimeType,
+                    data: base64Data
+                }
+            },
+            {
+                type: 'text',
+                text: message
+            }
+        ];
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
+            'Content-Type': 'application/json',
             'x-api-key': apiKey,
             'anthropic-version': '2023-06-01',
-            'Content-Type': 'application/json'
+            'anthropic-dangerous-direct-browser-access': 'true' // Required for browser extensions
         },
         body: JSON.stringify({
             model: apiModel,
             messages: [{
                 role: 'user',
-                content: message
+                content: messageContent
             }],
             max_tokens: model.includes('3.5') ? 8192 : 4096
         })
@@ -373,8 +515,8 @@ async function callClaude(apiKey, message, model, context) {
     return data.content[0].text;
 }
 
-// Call n8n webhook
-async function callN8n(webhookUrl, apiKey, message, context) {
+// Call n8n webhook with screenshot support
+async function callN8n(webhookUrl, apiKey, message, context, screenshot = null) {
     const headers = { 'Content-Type': 'application/json' };
 
     if (apiKey && webhookUrl.includes('n8n.cloud')) {
@@ -382,16 +524,23 @@ async function callN8n(webhookUrl, apiKey, message, context) {
         headers['X-N8N-API-KEY'] = apiKey;
     }
 
+    const requestBody = {
+        message,
+        context,
+        model: state.settings.selectedModel,
+        provider: state.settings.selectedProvider,
+        timestamp: new Date().toISOString()
+    };
+
+    // Add screenshot if provided
+    if (screenshot) {
+        requestBody.screenshot = screenshot;
+    }
+
     const response = await fetch(webhookUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-            message,
-            context,
-            model: state.settings.selectedModel,
-            provider: state.settings.selectedProvider,
-            timestamp: new Date().toISOString()
-        })
+        body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -425,18 +574,20 @@ async function testAPI(api, config) {
                 };
 
             case 'anthropic':
-                // Test Claude API with correct model ID
+                // Test Claude API with correct model ID and headers
+                console.log('Testing Anthropic API key...');
                 const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'x-api-key': config.apiKey,
                         'anthropic-version': '2023-06-01',
-                        'Content-Type': 'application/json'
+                        'anthropic-dangerous-direct-browser-access': 'true' // Required for browser extensions
                     },
                     body: JSON.stringify({
                         model: 'claude-3-haiku-20240307', // Use full model ID
-                        messages: [{ role: 'user', content: 'Hi' }],
-                        max_tokens: 10
+                        messages: [{ role: 'user', content: 'Hello' }],
+                        max_tokens: 50
                     })
                 });
 
